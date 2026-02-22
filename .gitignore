@@ -1,0 +1,28 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Secrets (never commit these)
+*.env
+.env.*
+
+# App data
+*.gguf
+Models/
+
+# Archives
+*.xcarchive
+*.ipa
+*.dSYM.zip
