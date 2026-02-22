@@ -1,0 +1,653 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		12591532333C6399E247D2CE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4A70B28CBDA5404EBBA3CD91 /* Assets.xcassets */; };
+		2D5C6116A5ACB75B1D80E0F8 /* ToolRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0816F19632B71EDEFD239AF6 /* ToolRegistry.swift */; };
+		36A69B470B414FB117BBFF90 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = ABC69980C1896394985E921D /* Sparkle */; };
+		5FDDE2FF10F815F52664113A /* PolicyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21BAFF8CCA6485D3EE2D9234 /* PolicyEngine.swift */; };
+		62808B511820269F6BEC4428 /* PlaceholderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96A54035B484E6C43DEEE82 /* PlaceholderTests.swift */; };
+		6589FD2E3DEC53501DC0E997 /* ToolExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9EE558CD3E3DEEE5CEBB5BB /* ToolExecutor.swift */; };
+		7FF1402EAA20A6F5449F1343 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = D3B487FF07E678A7DB166CC8 /* KeyboardShortcuts */; };
+		A0CE3A329E003CB4BD21B5E0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130BB03FB5E243D4DBA6FB75 /* ContentView.swift */; };
+		AC7220297180EC75C7A31876 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99642283F003A220D69A2BD /* Types.swift */; };
+		B8C7F9F7F3CCF4EA527A4972 /* JARVISApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EEE19D2BF51B9712E900275 /* JARVISApp.swift */; };
+		FAB1C3C764ED8F703E313309 /* ModelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98ED1758EF0B5BCEFB2F339A /* ModelProvider.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		04227B150CEE52ECF8078191 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ADD63BE4B2357052078A3C83 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0F6CA2CF9091CE89DFF72E1D;
+			remoteInfo = JARVIS;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		02D4D87BF7338D15B9C076C1 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		0816F19632B71EDEFD239AF6 /* ToolRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRegistry.swift; sourceTree = "<group>"; };
+		130BB03FB5E243D4DBA6FB75 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		21BAFF8CCA6485D3EE2D9234 /* PolicyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolicyEngine.swift; sourceTree = "<group>"; };
+		2F83C1630CAC0BFB366E7C05 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		3C7FE8AC15B41CC5C387BEAA /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		3E232E91C78764FBD41E0B51 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		46238B6BB93DC0DBDB353001 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		4A70B28CBDA5404EBBA3CD91 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		65B83ACDA9E06E984E4F198D /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		694CFBAA1E9EEDD4EA7C36FE /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		6A4347E38FD41C2BA6958E56 /* JARVIS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JARVIS.entitlements; sourceTree = "<group>"; };
+		6EEE19D2BF51B9712E900275 /* JARVISApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JARVISApp.swift; sourceTree = "<group>"; };
+		75907A7A8155C31FB5E1E545 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		77572CF98570D7728856A304 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		85A5541110336F7A97450FEE /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		9196BECB436ABEA40EBC803A /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		98ED1758EF0B5BCEFB2F339A /* ModelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelProvider.swift; sourceTree = "<group>"; };
+		B96A54035B484E6C43DEEE82 /* PlaceholderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderTests.swift; sourceTree = "<group>"; };
+		BC57BDC1AD7F2121361BDECD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DBE6CDFF2E6B3AEAFD720F34 /* JARVIS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JARVIS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DC55B2670AD898C833E8D3F4 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		F89A5FD5332EC5B9ED8DD165 /* JARVISTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JARVISTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F99642283F003A220D69A2BD /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
+		F9EE558CD3E3DEEE5CEBB5BB /* ToolExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolExecutor.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CC3A4CAEF8895C10C904473A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				36A69B470B414FB117BBFF90 /* Sparkle in Frameworks */,
+				7FF1402EAA20A6F5449F1343 /* KeyboardShortcuts in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		067DD2827E7CAE0ADB776D41 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				4A70B28CBDA5404EBBA3CD91 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		10420B069E9F830103DA5979 /* Browser */ = {
+			isa = PBXGroup;
+			children = (
+				9196BECB436ABEA40EBC803A /* .gitkeep */,
+			);
+			path = Browser;
+			sourceTree = "<group>";
+		};
+		1738B4F0193DFC8C558E1EFE /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				62B70E87A5ACF702F9BE1EBD /* Extensions */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		2496907EB6559199CA2D75D5 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				2F83C1630CAC0BFB366E7C05 /* .gitkeep */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		3489A5A763B10E2AD6B6095A /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				694CFBAA1E9EEDD4EA7C36FE /* .gitkeep */,
+				98ED1758EF0B5BCEFB2F339A /* ModelProvider.swift */,
+				21BAFF8CCA6485D3EE2D9234 /* PolicyEngine.swift */,
+				F9EE558CD3E3DEEE5CEBB5BB /* ToolExecutor.swift */,
+				0816F19632B71EDEFD239AF6 /* ToolRegistry.swift */,
+				F99642283F003A220D69A2BD /* Types.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		49A1D5F46A700EBBD6E3D9AC /* ToolTests */ = {
+			isa = PBXGroup;
+			children = (
+				77572CF98570D7728856A304 /* .gitkeep */,
+			);
+			path = ToolTests;
+			sourceTree = "<group>";
+		};
+		5B66F20841D6687FAB22BEA6 /* Memory */ = {
+			isa = PBXGroup;
+			children = (
+				75907A7A8155C31FB5E1E545 /* .gitkeep */,
+			);
+			path = Memory;
+			sourceTree = "<group>";
+		};
+		62B70E87A5ACF702F9BE1EBD /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				3E232E91C78764FBD41E0B51 /* .gitkeep */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		710496CFB31B523C5F1BD84C /* Tools */ = {
+			isa = PBXGroup;
+			children = (
+				10420B069E9F830103DA5979 /* Browser */,
+				D156A8812E2FDFB19F0B1A0D /* BuiltIn */,
+				961356C8F6FE1C4232955034 /* ComputerControl */,
+				F847C6F1CDFBBAAE32BDA453 /* MCP */,
+			);
+			path = Tools;
+			sourceTree = "<group>";
+		};
+		75594F8B2D179BDC1BED9E1C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DBE6CDFF2E6B3AEAFD720F34 /* JARVIS.app */,
+				F89A5FD5332EC5B9ED8DD165 /* JARVISTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9341588D992E1CFDCECE8FDB /* SettingsView */ = {
+			isa = PBXGroup;
+			children = (
+				65B83ACDA9E06E984E4F198D /* .gitkeep */,
+			);
+			path = SettingsView;
+			sourceTree = "<group>";
+		};
+		961356C8F6FE1C4232955034 /* ComputerControl */ = {
+			isa = PBXGroup;
+			children = (
+				02D4D87BF7338D15B9C076C1 /* .gitkeep */,
+			);
+			path = ComputerControl;
+			sourceTree = "<group>";
+		};
+		98F8CE23498C0CF6D7ABF3D4 = {
+			isa = PBXGroup;
+			children = (
+				EC4A9F495747DDC34193FD4D /* JARVIS */,
+				EB79CBCC6C11F97ECE3A7FC8 /* Tests */,
+				75594F8B2D179BDC1BED9E1C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AB624132D1411FE926D5C926 /* IntegrationTests */ = {
+			isa = PBXGroup;
+			children = (
+				DC55B2670AD898C833E8D3F4 /* .gitkeep */,
+			);
+			path = IntegrationTests;
+			sourceTree = "<group>";
+		};
+		B9BB7248F2B9A0A214773C65 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				6EEE19D2BF51B9712E900275 /* JARVISApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		CECE8E9615B4E75C5BFDDE7A /* Voice */ = {
+			isa = PBXGroup;
+			children = (
+				46238B6BB93DC0DBDB353001 /* .gitkeep */,
+			);
+			path = Voice;
+			sourceTree = "<group>";
+		};
+		D156A8812E2FDFB19F0B1A0D /* BuiltIn */ = {
+			isa = PBXGroup;
+			children = (
+				85A5541110336F7A97450FEE /* .gitkeep */,
+			);
+			path = BuiltIn;
+			sourceTree = "<group>";
+		};
+		DAA18709484DFB1C727547E8 /* CoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				B96A54035B484E6C43DEEE82 /* PlaceholderTests.swift */,
+			);
+			path = CoreTests;
+			sourceTree = "<group>";
+		};
+		DD316B37F2564EBAC746C4DA /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				130BB03FB5E243D4DBA6FB75 /* ContentView.swift */,
+				9341588D992E1CFDCECE8FDB /* SettingsView */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		EB79CBCC6C11F97ECE3A7FC8 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				DAA18709484DFB1C727547E8 /* CoreTests */,
+				2496907EB6559199CA2D75D5 /* Fixtures */,
+				AB624132D1411FE926D5C926 /* IntegrationTests */,
+				49A1D5F46A700EBBD6E3D9AC /* ToolTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		EC4A9F495747DDC34193FD4D /* JARVIS */ = {
+			isa = PBXGroup;
+			children = (
+				BC57BDC1AD7F2121361BDECD /* Info.plist */,
+				6A4347E38FD41C2BA6958E56 /* JARVIS.entitlements */,
+				B9BB7248F2B9A0A214773C65 /* App */,
+				3489A5A763B10E2AD6B6095A /* Core */,
+				5B66F20841D6687FAB22BEA6 /* Memory */,
+				067DD2827E7CAE0ADB776D41 /* Resources */,
+				1738B4F0193DFC8C558E1EFE /* Shared */,
+				710496CFB31B523C5F1BD84C /* Tools */,
+				DD316B37F2564EBAC746C4DA /* UI */,
+				CECE8E9615B4E75C5BFDDE7A /* Voice */,
+			);
+			path = JARVIS;
+			sourceTree = "<group>";
+		};
+		F847C6F1CDFBBAAE32BDA453 /* MCP */ = {
+			isa = PBXGroup;
+			children = (
+				3C7FE8AC15B41CC5C387BEAA /* .gitkeep */,
+			);
+			path = MCP;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0F6CA2CF9091CE89DFF72E1D /* JARVIS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4AEE4371E844050FDDCC7D67 /* Build configuration list for PBXNativeTarget "JARVIS" */;
+			buildPhases = (
+				97FAC4CCA15A870279432DCD /* Sources */,
+				298D2A05C76FBDCF55F6259A /* Resources */,
+				CC3A4CAEF8895C10C904473A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JARVIS;
+			packageProductDependencies = (
+				ABC69980C1896394985E921D /* Sparkle */,
+				D3B487FF07E678A7DB166CC8 /* KeyboardShortcuts */,
+			);
+			productName = JARVIS;
+			productReference = DBE6CDFF2E6B3AEAFD720F34 /* JARVIS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		31D5CD0EB6B805B41C690E1C /* JARVISTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5923FD4400A2F84204E922DD /* Build configuration list for PBXNativeTarget "JARVISTests" */;
+			buildPhases = (
+				C550BAB77C6C391CF1583D42 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C8865D160E9AF31BC2DE0DBB /* PBXTargetDependency */,
+			);
+			name = JARVISTests;
+			packageProductDependencies = (
+			);
+			productName = JARVISTests;
+			productReference = F89A5FD5332EC5B9ED8DD165 /* JARVISTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		ADD63BE4B2357052078A3C83 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = E441122F760D220AA6AA3E06 /* Build configuration list for PBXProject "JARVIS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 98F8CE23498C0CF6D7ABF3D4;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				708A46F0EBFBF31DDD85FBA4 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				E3CF08CD924F91C92E5488BC /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0F6CA2CF9091CE89DFF72E1D /* JARVIS */,
+				31D5CD0EB6B805B41C690E1C /* JARVISTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		298D2A05C76FBDCF55F6259A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				12591532333C6399E247D2CE /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		97FAC4CCA15A870279432DCD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0CE3A329E003CB4BD21B5E0 /* ContentView.swift in Sources */,
+				B8C7F9F7F3CCF4EA527A4972 /* JARVISApp.swift in Sources */,
+				FAB1C3C764ED8F703E313309 /* ModelProvider.swift in Sources */,
+				5FDDE2FF10F815F52664113A /* PolicyEngine.swift in Sources */,
+				6589FD2E3DEC53501DC0E997 /* ToolExecutor.swift in Sources */,
+				2D5C6116A5ACB75B1D80E0F8 /* ToolRegistry.swift in Sources */,
+				AC7220297180EC75C7A31876 /* Types.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C550BAB77C6C391CF1583D42 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				62808B511820269F6BEC4428 /* PlaceholderTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C8865D160E9AF31BC2DE0DBB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0F6CA2CF9091CE89DFF72E1D /* JARVIS */;
+			targetProxy = 04227B150CEE52ECF8078191 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0DB371BF75A7AB814B0120D8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.aidaemon.JARVISTests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/JARVIS.app/Contents/MacOS/JARVIS";
+			};
+			name = Release;
+		};
+		6C6C6DBE34ABE409C1C9C0EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.aidaemon.JARVISTests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/JARVIS.app/Contents/MacOS/JARVIS";
+			};
+			name = Debug;
+		};
+		789C7D2D89E9496D7F4047BA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AFEF043A2D3BCC64F0188D02 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = JARVIS/JARVIS.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JARVIS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aidaemon;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B7154B6483D311E0941D0D6D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		D444A73AFAB87D349E01858F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = JARVIS/JARVIS.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JARVIS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aidaemon;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4AEE4371E844050FDDCC7D67 /* Build configuration list for PBXNativeTarget "JARVIS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFEF043A2D3BCC64F0188D02 /* Debug */,
+				D444A73AFAB87D349E01858F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5923FD4400A2F84204E922DD /* Build configuration list for PBXNativeTarget "JARVISTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6C6C6DBE34ABE409C1C9C0EF /* Debug */,
+				0DB371BF75A7AB814B0120D8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E441122F760D220AA6AA3E06 /* Build configuration list for PBXProject "JARVIS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				789C7D2D89E9496D7F4047BA /* Debug */,
+				B7154B6483D311E0941D0D6D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		708A46F0EBFBF31DDD85FBA4 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+		E3CF08CD924F91C92E5488BC /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		ABC69980C1896394985E921D /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E3CF08CD924F91C92E5488BC /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		D3B487FF07E678A7DB166CC8 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 708A46F0EBFBF31DDD85FBA4 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = ADD63BE4B2357052078A3C83 /* Project object */;
+}

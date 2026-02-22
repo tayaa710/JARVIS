@@ -1,0 +1,45 @@
+name: JARVIS
+options:
+  bundleIdPrefix: com.aidaemon
+  deploymentTarget:
+    macOS: "14.0"
+  defaultConfig: Debug
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.0.0"
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: "2.0.0"
+
+targets:
+  JARVIS:
+    type: application
+    platform: macOS
+    sources:
+      - path: JARVIS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aidaemon
+        INFOPLIST_FILE: JARVIS/Info.plist
+        CODE_SIGN_ENTITLEMENTS: JARVIS/JARVIS.entitlements
+        GENERATE_INFOPLIST_FILE: false
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: 5.0
+    dependencies:
+      - package: Sparkle
+      - package: KeyboardShortcuts
+
+  JARVISTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+    settings:
+      base:
+        SWIFT_VERSION: 5.0
+        GENERATE_INFOPLIST_FILE: true
+    dependencies:
+      - target: JARVIS

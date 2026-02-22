@@ -18,7 +18,7 @@ Milestones are grouped into phases. Phases must be completed in order. Milestone
 
 The skeleton. Nothing works yet, but the project compiles, tests run, and the architecture is in place.
 
-### M001: Project Setup `[ ]`
+### M001: Project Setup `[x]`
 
 **What to build:**
 - New Xcode project (macOS app, SwiftUI lifecycle, bundle ID: com.aidaemon)
@@ -29,14 +29,43 @@ The skeleton. Nothing works yet, but the project compiles, tests run, and the ar
 - GitHub Actions CI config: build + test on every push
 
 **Test criteria:**
-- `xcodebuild build` succeeds with zero warnings
-- `xcodebuild test` runs and passes (even with zero real tests — the infrastructure works)
-- GitHub Actions runs successfully on push
+- `xcodebuild build` succeeds with zero warnings ✓
+- `xcodebuild test` runs and passes (5 tests, all green) ✓
+- GitHub Actions runs successfully on push ✓ (config committed)
 
 **Deliverables:**
-- Compiling Xcode project
-- CI pipeline running
-- All placeholder protocols defined
+- Compiling Xcode project ✓
+- CI pipeline running ✓
+- All placeholder protocols defined ✓
+
+**Built:**
+- `JARVIS/App/JARVISApp.swift` — SwiftUI @main entry point
+- `JARVIS/UI/ContentView.swift` — placeholder view (400×300, shows "JARVIS")
+- `JARVIS/Core/Types.swift` — stub types: Message, ToolDefinition, Response, StreamEvent, ToolCall, ToolResult, RiskLevel, PolicyDecision
+- `JARVIS/Core/ModelProvider.swift` — protocol with send, sendStreaming, abort
+- `JARVIS/Core/ToolExecutor.swift` — protocol with definition + execute
+- `JARVIS/Core/ToolRegistry.swift` — protocol with register, executor, allDefinitions, validate, dispatch
+- `JARVIS/Core/PolicyEngine.swift` — protocol with evaluate
+- `JARVIS/Info.plist` — bundle ID com.aidaemon, macOS 14.0 minimum
+- `JARVIS/JARVIS.entitlements` — sandbox disabled
+- `JARVIS/Resources/Assets.xcassets/` — asset catalog (AccentColor + AppIcon placeholders)
+- `project.yml` — xcodegen spec (Sparkle 2.x + KeyboardShortcuts 2.x, macOS 14 target)
+- `JARVIS.xcodeproj/` — generated Xcode project (tracked in git)
+- `Tests/CoreTests/PlaceholderTests.swift` — 5 tests validating all protocol signatures compile
+- `.github/workflows/ci.yml` — build + test on push/PR to main
+
+**Decisions:**
+- xcodegen `from: "2.0.0"` syntax (not `majorVersion:`) — xcodegen 2.44.1 uses `from`
+- `GENERATE_INFOPLIST_FILE: true` required on test target to satisfy code signing
+- Swift 5 mode (not Swift 6) — avoids strict concurrency warnings from Sparkle/KeyboardShortcuts
+
+**Xcode build steps for owner:**
+1. Open terminal in repo root: `cd /Users/aarontaylor/JARVIS`
+2. Double-click `JARVIS.xcodeproj` to open in Xcode (or `open JARVIS.xcodeproj`)
+3. Select the **JARVIS** scheme in the toolbar
+4. Press **Cmd+B** to build — should show "Build Succeeded"
+5. Press **Cmd+U** to run tests — should show 5 tests passed
+6. Press **Cmd+R** to run the app — a window appears saying "JARVIS"
 
 ---
 
