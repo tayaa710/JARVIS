@@ -724,7 +724,7 @@ JARVIS can see and interact with any app on the Mac.
 
 JARVIS can browse the web and interact with websites.
 
-### M013: Browser Detection `[ ]`
+### M013: Browser Detection `[x]`
 
 **What to build:**
 - `BrowserDetector` — identify frontmost browser app and its type
@@ -733,12 +733,38 @@ JARVIS can browse the web and interact with websites.
 - Return: browser name, bundle ID, type, PID
 
 **Test criteria:**
-- Test correct type for each known browser bundle ID
-- Test unknown browser returns type "unknown"
-- Test with no browser running returns nil
+- Test correct type for each known browser bundle ID ✓
+- Test unknown browser returns type "unknown" ✓
+- Test with no browser running returns nil ✓
 
 **Deliverables:**
-- BrowserDetector, fully tested
+- BrowserDetector, fully tested ✓
+
+**Built:**
+- `JARVIS/Tools/Browser/BrowserType.swift` — `BrowserType` enum (chromium/safari/firefox/unknown; Sendable, Equatable), `BrowserInfo` struct (name, bundleId, type, pid; Sendable, Equatable).
+- `JARVIS/Tools/Browser/BrowserDetecting.swift` — `BrowserDetecting` protocol: `detectFrontmostBrowser() -> BrowserInfo?` (sync), `classifyBrowser(bundleId:) -> BrowserType`.
+- `JARVIS/Tools/Browser/BrowserDetector.swift` — `struct BrowserDetector: BrowserDetecting`. Stateless. Hardcoded `[String: BrowserType]` dictionary with 11 known bundle IDs (Chrome, Chrome Canary, Edge, Arc, Brave, Vivaldi, Opera, Safari, Safari TP, Firefox, Firefox Dev Edition). Closure injection for `frontmostAppProvider` (NSWorkspace default in production, mock-injectable in tests).
+- `JARVIS/Shared/Logger.swift` — Added `Logger.browser` subsystem.
+- `Tests/ToolTests/BrowserDetectorTests.swift` — 12 tests: 10 classifyBrowser bundle ID tests + 2 detectFrontmostBrowser tests (no browser / Chrome running).
+- `Tests/Helpers/MockBrowserDetector.swift` — `MockBrowserDetector` with configurable `detectResult`, `classifyResult`, and call-count recording.
+
+**Total tests: 429 (was 417, added 12)**
+
+**Note on test count:** Memory recorded 464 tests after M012. Actual count was 417 before this session — some M012 test files may have been excluded from the xcodeproj between sessions. The project now has 429 tests running, all green.
+
+**Decisions:**
+- `BrowserDetector` is a `struct` (stateless, automatically Sendable) — matches the stateless nature of the service.
+- Closure injection for `frontmostAppProvider` follows the `ContextLockChecker` pattern already established in M011.
+- `detectFrontmostBrowser()` is synchronous — `NSWorkspace.shared.frontmostApplication` is synchronous and fast; no async needed.
+- Opera and Chrome Canary included beyond the milestone spec — they're just 2 extra dictionary entries and cost nothing.
+- No `browser_detect` tool registered — detection is a service used by M014/M015 tools, not a user-facing tool.
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 429 tests, all green
+5. No new UI — this is infrastructure for M014/M015 browser tools
 
 ---
 

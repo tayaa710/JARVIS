@@ -29,7 +29,7 @@ targets:
         CURRENT_PROJECT_VERSION: 1
         SWIFT_VERSION: 5.0
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: E627YHCMQ2
+        DEVELOPMENT_TEAM: 2AU9UU8X4D
         CODE_SIGN_IDENTITY: "Apple Development"
     dependencies:
       - package: Sparkle

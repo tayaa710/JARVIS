@@ -90,4 +90,5 @@ public enum Logger {
     public static let accessibility  = JARVISLogger(subsystem: "com.aidaemon", category: "accessibility")
     public static let input          = JARVISLogger(subsystem: "com.aidaemon", category: "input")
     public static let screenshot     = JARVISLogger(subsystem: "com.aidaemon", category: "screenshot")
+    public static let browser        = JARVISLogger(subsystem: "com.aidaemon", category: "browser")
 }
