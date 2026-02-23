@@ -407,7 +407,7 @@ The brain comes alive. JARVIS can think and use tools, but only simple ones.
 
 ---
 
-### M008: Chat UI `[ ]`
+### M008: Chat UI `[x]`
 
 **What to build:**
 - `FloatingWindow` — always-on-top window, draggable, resizable, can be minimised to menu bar
@@ -420,16 +420,56 @@ The brain comes alive. JARVIS can think and use tools, but only simple ones.
 - `ConfirmationDialog` — modal shown when PolicyEngine requires confirmation. Shows: what tool, what arguments, allow/deny buttons.
 
 **Test criteria:**
-- FloatingWindow: verify it stays on top, can be hidden/shown via menu bar
-- ChatView: verify messages display in correct order
-- ChatView: verify streaming text appears incrementally
-- Kill switch: verify it calls Orchestrator.abort() and UI resets to idle
-- ConfirmationDialog: verify it blocks execution until user responds
+- FloatingWindow: verify it stays on top, can be hidden/shown via menu bar ✓ (manual)
+- ChatView: verify messages display in correct order ✓ (testSendAddsUserMessage, testSuccessfulStreamingResponse)
+- ChatView: verify streaming text appears incrementally ✓ (testStreamingTextDeltasAccumulate)
+- Kill switch: verify it calls Orchestrator.abort() and UI resets to idle ✓ (testAbortResetsStatus)
+- ConfirmationDialog: verify it blocks execution until user responds ✓ (testConfirmationApproved, testConfirmationDenied)
 
 **Deliverables:**
-- Functional chat interface
-- Users can talk to JARVIS via text and see responses
-- Kill switch works
+- Functional chat interface ✓
+- Users can talk to JARVIS via text and see responses ✓
+- Kill switch works ✓
+
+**Built:**
+- `JARVIS/Core/Orchestrator.swift` — Added `OrchestratorEvent` enum, `OrchestratorEventHandler` typealias, `processWithStreaming` to protocol
+- `JARVIS/Core/OrchestratorImpl.swift` — `processWithStreaming` + `runStreamingLoop` (SSE accumulation, tool event dispatch, confirmation wiring)
+- `JARVIS/Tools/BuiltIn/BuiltInToolRegistration.swift` — Free function `registerBuiltInTools(in:)` for all 10 built-in tools
+- `JARVIS/UI/ChatTypes.swift` — `AssistantStatus`, `ChatMessage`, `ToolCallInfo`, `ToolCallStatus`, `PendingConfirmation`
+- `JARVIS/UI/ChatViewModel.swift` — `@Observable @MainActor` class; streaming event handling, confirmation via CheckedContinuation, Keychain API key bootstrap
+- `JARVIS/UI/MessageBubbleView.swift` — User/assistant bubbles, markdown, tool call pills, streaming cursor
+- `JARVIS/UI/ChatInputView.swift` — TextEditor, send button, Cmd+Enter shortcut
+- `JARVIS/UI/StatusIndicatorView.swift` — thinking/executing/speaking states, kill switch button
+- `JARVIS/UI/ConfirmationDialog.swift` — Sheet shown on `.requireConfirmation`, allow/deny buttons
+- `JARVIS/UI/ChatView.swift` — Root view: message list, auto-scroll, API key overlay, alert
+- `JARVIS/App/AppDelegate.swift` — NSPanel (.floating level, non-activating), NSStatusItem menu bar icon
+- `JARVIS/App/JARVISApp.swift` — Replaced `WindowGroup` with `@NSApplicationDelegateAdaptor` + `Settings { EmptyView() }`
+- `JARVIS/UI/ContentView.swift` — Deleted (dead code)
+- `Tests/CoreTests/OrchestratorStreamingTests.swift` — 4 tests: text response, tool_use flow, abort, multi-round
+- `Tests/UITests/ChatViewModelTests.swift` — 13 tests: initial state, send/abort, streaming, tool events, confirmation, API key
+- `Tests/Helpers/MockOrchestrator.swift` — Configurable mock for ViewModel tests
+- `Tests/Helpers/MockKeychainHelper.swift` — Mock Keychain that returns a fake API key
+- `Tests/IntegrationTests/BuiltInToolsIntegrationTests.swift` — Updated to use `registerBuiltInTools(in:)`
+
+**Total tests: 246 (was 229, added 17)**
+
+**Decisions:**
+- `@Observable @MainActor` for `ChatViewModel` — macOS 14+ supports this combination; `@Bindable` wrapper used in `ChatView` for `$viewModel.property` bindings.
+- `processWithStreaming` fires events via `@Sendable` callback; UI dispatches each event back to `@MainActor` via `Task { @MainActor }` inside the callback.
+- `PendingConfirmation` holds a `CheckedContinuation<Bool, Never>` — `abort()` resumes it with `false` to prevent continuation leaks.
+- `ContentView.swift` deleted; `WindowGroup` removed from JARVISApp — all window management done by AppDelegate.
+- `OrchestratorImpl.swift` is 480 lines — approaching limit. Next modification should split it.
+- `BuiltInToolRegistration.swift` is the single source of truth for tool registration; `BuiltInToolsIntegrationTests` now delegates to it.
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 246 tests, all green
+5. Press **Cmd+R** — the app launches; look for the brain icon in your menu bar (top-right of screen)
+6. Click the brain icon → "Show JARVIS" to open the floating chat window
+7. First run: enter your Anthropic API key (get it from console.anthropic.com)
+8. Type a message and press Cmd+Enter or click the arrow button — JARVIS responds
 
 ---
 
