@@ -39,8 +39,9 @@ struct PlaceholderTests {
                     inputSchema: .object([:])
                 )
             }
-            func execute(arguments: [String: String]) async throws -> ToolResult {
-                ToolResult(toolUseId: "tu_mock", content: "ok", isError: false)
+            var riskLevel: RiskLevel { .safe }
+            func execute(id: String, arguments: [String: JSONValue]) async throws -> ToolResult {
+                ToolResult(toolUseId: id, content: "ok", isError: false)
             }
         }
         let executor: any ToolExecutor = MockExecutor()

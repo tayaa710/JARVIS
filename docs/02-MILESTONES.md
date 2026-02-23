@@ -175,7 +175,7 @@ The skeleton. Nothing works yet, but the project compiles, tests run, and the ar
 
 The brain comes alive. JARVIS can think and use tools, but only simple ones.
 
-### M004: Tool System `[ ]`
+### M004: Tool System `[x]`
 
 **What to build:**
 - `ToolDefinition` — schema for a tool: id, name, description, parameters (type, required, enum values), risk level
@@ -185,16 +185,42 @@ The brain comes alive. JARVIS can think and use tools, but only simple ones.
 - First built-in tool: `system_info` (returns macOS version, hostname, username, disk space, memory — all safe, read-only)
 
 **Test criteria:**
-- ToolDefinition: test serialisation to Anthropic JSON format
-- ToolRegistry: test registration, lookup, duplicate ID rejection
-- ToolRegistry: test argument validation (missing required args, wrong types, invalid enum values)
-- ToolRegistry: test dispatch calls correct executor
-- system_info tool: test it returns valid data in expected format
+- ToolDefinition: test serialisation to Anthropic JSON format ✓
+- ToolRegistry: test registration, lookup, duplicate ID rejection ✓
+- ToolRegistry: test argument validation (missing required args, wrong types, invalid enum values) ✓
+- ToolRegistry: test dispatch calls correct executor ✓
+- system_info tool: test it returns valid data in expected format ✓
 
 **Deliverables:**
-- Complete tool infrastructure
-- One working tool (system_info)
-- Full test coverage
+- Complete tool infrastructure ✓
+- One working tool (system_info) ✓
+- Full test coverage ✓
+
+**Built:**
+- `JARVIS/Core/ToolExecutor.swift` — Updated protocol: added `riskLevel: RiskLevel`, changed arg type from `[String: String]` to `[String: JSONValue]`, added `id: String` parameter to `execute`
+- `JARVIS/Core/ToolRegistry.swift` — Added `ToolRegistryError` enum (`duplicateToolName`, `unknownTool`, `validationFailed`) — Equatable for test assertions
+- `JARVIS/Core/SchemaValidator.swift` — Stateless `SchemaValidator` enum with `validate(input:against:)`. Validates required fields, type checks (string/number/integer/boolean/object/array), enum values. Flat schema only — no $ref or nested validation needed for current tools.
+- `JARVIS/Core/ToolRegistryImpl.swift` — `final class ToolRegistryImpl: ToolRegistry, @unchecked Sendable`. NSLock-protected `[String: any ToolExecutor]` store. `dispatch` catches executor errors and wraps them in `ToolResult(isError: true)` so Orchestrator always gets a result to send back to Claude.
+- `JARVIS/Tools/BuiltIn/SystemInfoTool.swift` — First built-in tool. Read-only: OS version, hostname, username, disk space (GB), RAM (GB). Risk level: `.safe`.
+- `Tests/CoreTests/SchemaValidatorTests.swift` — 13 tests
+- `Tests/CoreTests/ToolRegistryTests.swift` — 13 tests (includes `StubToolExecutor` helper)
+- `Tests/ToolTests/SystemInfoToolTests.swift` — 9 tests
+
+**Total tests: 102 (was 67, added 35)**
+
+**Decisions:**
+- `riskLevel` lives on `ToolExecutor`, not `ToolDefinition` — `ToolDefinition` is Codable for the Anthropic API which has no risk concept; risk is an internal concern.
+- `execute(id:arguments:)` includes the `id: String` parameter — executors need the `toolUseId` to construct a proper `ToolResult`. Returning just a content string would prevent executors from setting `isError: true` themselves.
+- `SchemaValidator` validates flat schemas only — full JSON Schema (allOf/anyOf/$ref/patterns) is not needed for JARVIS's built-in tools. Can be extended later.
+- `dispatch` calls `validate` first (which throws typed errors), then re-fetches the executor. Two lock acquisitions is acceptable — tools are registered at startup, making post-validate races effectively impossible.
+- `ToolRegistryError.validationFailed` uses `String(describing:)` on the underlying `SchemaValidationError` to include structured field information in the message.
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 102 tests, all green
+5. No new UI — these are infrastructure components
 
 ---
 
