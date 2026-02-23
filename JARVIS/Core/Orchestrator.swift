@@ -1,5 +1,19 @@
 import Foundation
 
+// MARK: - OrchestratorEvent
+
+enum OrchestratorEvent: Sendable {
+    case thinkingStarted
+    case textDelta(String)
+    case toolStarted(name: String)
+    case toolCompleted(name: String, result: String, isError: Bool)
+    case completed(OrchestratorResult)
+}
+
+// MARK: - OrchestratorEventHandler
+
+typealias OrchestratorEventHandler = @Sendable (OrchestratorEvent) -> Void
+
 // MARK: - OrchestratorError
 
 enum OrchestratorError: Error, Sendable {
@@ -42,6 +56,7 @@ typealias ConfirmationHandler = @Sendable (ToolUse) async -> Bool
 
 protocol Orchestrator: Sendable {
     func process(userMessage: String) async throws -> OrchestratorResult
+    func processWithStreaming(userMessage: String, onEvent: @escaping OrchestratorEventHandler) async throws -> OrchestratorResult
     func reset()
     func abort()
     var contextLock: ContextLock? { get }

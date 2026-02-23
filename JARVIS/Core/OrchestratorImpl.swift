@@ -115,6 +115,49 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
         }
     }
 
+    func processWithStreaming(
+        userMessage: String,
+        onEvent: @escaping OrchestratorEventHandler
+    ) async throws -> OrchestratorResult {
+        lock.withLock { _abortRequested = false }
+        lock.withLock { _conversationHistory.append(Message(role: .user, text: userMessage)) }
+
+        let startTime = Date()
+
+        let workTask = Task<OrchestratorResult, Error> { [self] in
+            try await self.runStreamingLoop(startTime: startTime, onEvent: onEvent)
+        }
+
+        lock.withLock { _currentTask = workTask }
+        defer { lock.withLock { _currentTask = nil } }
+
+        return try await withThrowingTaskGroup(of: OrchestratorResult.self) { group in
+            group.addTask {
+                do {
+                    return try await workTask.value
+                } catch is CancellationError {
+                    let wasAborted = self.lock.withLock { self._abortRequested }
+                    throw wasAborted ? OrchestratorError.cancelled : CancellationError()
+                }
+            }
+
+            let timeoutSeconds = self.timeout
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(timeoutSeconds * 1_000_000_000))
+                throw OrchestratorError.timeout
+            }
+
+            defer {
+                group.cancelAll()
+                workTask.cancel()
+            }
+            guard let result = try await group.next() else {
+                throw OrchestratorError.noResponse
+            }
+            return result
+        }
+    }
+
     // MARK: - Private: Main Loop
 
     private func runLoop(startTime: Date) async throws -> OrchestratorResult {
@@ -237,6 +280,177 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
         }
 
         Logger.orchestrator.warning("Max rounds exceeded (\(maxRounds))")
+        throw OrchestratorError.maxRoundsExceeded
+    }
+
+    // MARK: - Private: Streaming Loop
+
+    private func runStreamingLoop(
+        startTime: Date,
+        onEvent: @escaping OrchestratorEventHandler
+    ) async throws -> OrchestratorResult {
+        var roundCount = 0
+        var toolsUsed: [String] = []
+        var errorsEncountered = 0
+        var totalInputTokens = 0
+        var totalOutputTokens = 0
+
+        Logger.orchestrator.info("Starting streaming loop (maxRounds=\(self.maxRounds))")
+
+        while roundCount < maxRounds {
+            try Task.checkCancellation()
+
+            let history = lock.withLock { _conversationHistory }
+            let tools = toolRegistry.allDefinitions()
+
+            Logger.orchestrator.info("Streaming round \(roundCount + 1): \(history.count) messages, \(tools.count) tools")
+
+            onEvent(.thinkingStarted)
+
+            let stream = modelProvider.sendStreaming(messages: history, tools: tools, system: systemPrompt)
+
+            var textAccumulator = ""
+            var pendingToolUses: [Int: (id: String, name: String)] = [:]
+            var pendingInputJSON: [Int: String] = [:]
+            var completedToolUses: [ToolUse] = []
+            var stopReason: StopReason?
+            var roundOutputTokens = 0
+
+            for try await event in stream {
+                try Task.checkCancellation()
+                switch event {
+                case .messageStart:
+                    break
+                case .textDelta(let text):
+                    textAccumulator += text
+                    onEvent(.textDelta(text))
+                case .toolUseStart(let index, let toolUse):
+                    pendingToolUses[index] = (id: toolUse.id, name: toolUse.name)
+                    pendingInputJSON[index] = ""
+                case .inputJSONDelta(let index, let delta):
+                    pendingInputJSON[index, default: ""] += delta
+                case .contentBlockStop(let index):
+                    if let pending = pendingToolUses[index] {
+                        let jsonStr = pendingInputJSON[index] ?? ""
+                        let input: [String: JSONValue]
+                        if jsonStr.isEmpty {
+                            input = [:]
+                        } else if let data = jsonStr.data(using: .utf8),
+                                  let parsed = try? JSONDecoder().decode([String: JSONValue].self, from: data) {
+                            input = parsed
+                        } else {
+                            input = [:]
+                        }
+                        completedToolUses.append(ToolUse(id: pending.id, name: pending.name, input: input))
+                        pendingToolUses.removeValue(forKey: index)
+                        pendingInputJSON.removeValue(forKey: index)
+                    }
+                case .messageDelta(let reason, let usage):
+                    stopReason = reason
+                    roundOutputTokens = usage.outputTokens
+                case .messageStop:
+                    break
+                case .ping:
+                    break
+                }
+            }
+
+            // Build content blocks from accumulated data
+            var contentBlocks: [ContentBlock] = []
+            if !textAccumulator.isEmpty {
+                contentBlocks.append(.text(textAccumulator))
+            }
+            for toolUse in completedToolUses {
+                contentBlocks.append(.toolUse(toolUse))
+            }
+
+            // Append assistant message to history
+            lock.withLock {
+                _conversationHistory.append(Message(role: .assistant, content: contentBlocks))
+            }
+
+            totalOutputTokens += roundOutputTokens
+            roundCount += 1
+
+            // If no tool use requested (or stop reason is end_turn), return
+            if completedToolUses.isEmpty || stopReason != .toolUse {
+                let elapsed = Date().timeIntervalSince(startTime)
+                Logger.orchestrator.info(
+                    "Streaming loop done: \(roundCount) round(s), \(toolsUsed.count) tool(s), " +
+                    "\(errorsEncountered) error(s), \(String(format: "%.2f", elapsed))s"
+                )
+                let result = OrchestratorResult(
+                    text: textAccumulator,
+                    metrics: TurnMetrics(
+                        roundCount: roundCount,
+                        elapsedTime: elapsed,
+                        toolsUsed: toolsUsed,
+                        errorsEncountered: errorsEncountered,
+                        inputTokens: totalInputTokens,
+                        outputTokens: totalOutputTokens
+                    )
+                )
+                onEvent(.completed(result))
+                return result
+            }
+
+            // Process tool calls
+            var toolResultBlocks: [ContentBlock] = []
+            for toolUse in completedToolUses {
+                let toolStart = Date()
+                let executor = toolRegistry.executor(for: toolUse.name)
+                let riskLevel = executor?.riskLevel ?? .dangerous
+                let decision = policyEngine.evaluate(call: toolUse, riskLevel: riskLevel)
+
+                Logger.orchestrator.info(
+                    "Tool '\(toolUse.name)' risk=\(String(describing: riskLevel)) decision=\(String(describing: decision))"
+                )
+
+                onEvent(.toolStarted(name: toolUse.name))
+
+                switch decision {
+                case .deny:
+                    Logger.orchestrator.warning("Tool '\(toolUse.name)' denied by policy")
+                    let denied = ToolResult(toolUseId: toolUse.id, content: "Tool call denied by safety policy.", isError: true)
+                    onEvent(.toolCompleted(name: toolUse.name, result: denied.content, isError: true))
+                    toolResultBlocks.append(.toolResult(denied))
+                    errorsEncountered += 1
+
+                case .requireConfirmation:
+                    let approved: Bool
+                    if let handler = confirmationHandler {
+                        approved = await handler(toolUse)
+                    } else {
+                        approved = false
+                    }
+                    if approved {
+                        let result = await executeToolSafely(toolUse, start: toolStart)
+                        onEvent(.toolCompleted(name: toolUse.name, result: result.content, isError: result.isError))
+                        toolResultBlocks.append(.toolResult(result))
+                        if result.isError { errorsEncountered += 1 } else { toolsUsed.append(toolUse.name) }
+                    } else {
+                        Logger.orchestrator.info("Tool '\(toolUse.name)' rejected by user")
+                        let rejected = ToolResult(toolUseId: toolUse.id, content: "Tool call rejected by user.", isError: true)
+                        onEvent(.toolCompleted(name: toolUse.name, result: rejected.content, isError: true))
+                        toolResultBlocks.append(.toolResult(rejected))
+                        errorsEncountered += 1
+                    }
+
+                case .allow:
+                    let result = await executeToolSafely(toolUse, start: toolStart)
+                    onEvent(.toolCompleted(name: toolUse.name, result: result.content, isError: result.isError))
+                    toolResultBlocks.append(.toolResult(result))
+                    if result.isError { errorsEncountered += 1 } else { toolsUsed.append(toolUse.name) }
+                }
+            }
+
+            // Append tool results as user message
+            lock.withLock {
+                _conversationHistory.append(Message(role: .user, content: toolResultBlocks))
+            }
+        }
+
+        Logger.orchestrator.warning("Streaming max rounds exceeded (\(maxRounds))")
         throw OrchestratorError.maxRoundsExceeded
     }
 

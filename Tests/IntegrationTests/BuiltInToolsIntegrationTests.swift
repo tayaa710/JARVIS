@@ -5,18 +5,10 @@ import Foundation
 @Suite("Built-In Tools Integration Tests", .serialized)
 struct BuiltInToolsIntegrationTests {
 
-    // Register all 9 built-in tools in a fresh registry
+    // Register all 10 built-in tools in a fresh registry via the shared helper.
     private func makeRegistry() throws -> ToolRegistryImpl {
         let registry = ToolRegistryImpl()
-        try registry.register(AppListTool())
-        try registry.register(AppOpenTool())
-        try registry.register(FileSearchTool())
-        try registry.register(FileReadTool())
-        try registry.register(FileWriteTool())
-        try registry.register(ClipboardReadTool())
-        try registry.register(ClipboardWriteTool())
-        try registry.register(WindowListTool())
-        try registry.register(WindowManageTool())
+        try registerBuiltInTools(in: registry)
         return registry
     }
 
