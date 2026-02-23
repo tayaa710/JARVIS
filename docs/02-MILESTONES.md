@@ -112,27 +112,62 @@ The skeleton. Nothing works yet, but the project compiles, tests run, and the ar
 
 ---
 
-### M003: Model Provider `[ ]`
+### M003: Model Provider `[x]`
 
 **What to build:**
-- `ModelProvider` protocol: `send(messages:tools:)`, `sendStreaming(messages:tools:)`, `abort()`
+- `ModelProvider` protocol: `send(messages:tools:system:)`, `sendStreaming(messages:tools:system:)`, `abort()`
 - `AnthropicProvider` — implements ModelProvider using Claude Messages API via APIClient
 - `MockModelProvider` — returns pre-recorded responses from JSON fixtures for testing
 - `Message`, `Response`, `ToolUse`, `ToolResult` data types
-- Support for streaming responses (AsyncStream of text chunks and tool_use blocks)
+- Support for streaming responses (AsyncThrowingStream of text chunks and tool_use blocks)
 
 **Test criteria:**
-- AnthropicProvider: test request format matches Anthropic API spec (mock URLProtocol, inspect request body)
-- AnthropicProvider: test response parsing for text, tool_use, and mixed responses
-- AnthropicProvider: test error handling (401 unauthorized, 429 rate limit, 500 server error)
-- AnthropicProvider: test abort cancels in-flight request
-- AnthropicProvider: test streaming response parsing
-- MockModelProvider: test it returns queued responses in order
+- AnthropicProvider: test request format matches Anthropic API spec (mock URLProtocol, inspect request body) ✓
+- AnthropicProvider: test response parsing for text, tool_use, and mixed responses ✓
+- AnthropicProvider: test error handling (401 unauthorized, 429 rate limit, 500 server error) ✓
+- AnthropicProvider: test abort cancels in-flight request ✓
+- AnthropicProvider: test streaming response parsing ✓
+- MockModelProvider: test it returns queued responses in order ✓
 
 **Deliverables:**
-- Working Claude API integration (text + tool_use + streaming)
-- Mock provider ready for all future integration tests
-- JSON fixture files for common response types
+- Working Claude API integration (text + tool_use + streaming) ✓
+- Mock provider ready for all future integration tests ✓
+- JSON fixture files for common response types ✓
+
+**Built:**
+- `JARVIS/Shared/JSONValue.swift` — Recursive `JSONValue` enum (string, number, bool, null, array, object). Sendable, Codable, Equatable. Used for tool input schemas and tool_use.input.
+- `JARVIS/Core/Types.swift` — Full rewrite: `Role`, `Message` (custom Codable with string shorthand), `ContentBlock` (discriminated union), `ToolUse`, `ToolResult`, `ToolDefinition`, `Response`, `StopReason`, `Usage`, `StreamEvent`. Removed `ToolCall` (renamed to `ToolUse`).
+- `JARVIS/Core/ModelProvider.swift` — Updated protocol with `system: String?` param and `AsyncThrowingStream` return type.
+- `JARVIS/Core/SSEParser.swift` — `SSEParser` struct that converts raw `AsyncThrowingStream<Data>` into `AsyncThrowingStream<SSEEvent>`. Handles partial chunks, CRLF, comments, no-trailing-newline flush.
+- `JARVIS/Core/AnthropicProvider.swift` — `AnthropicError` enum + `AnthropicProvider` final class. Builds Anthropic API requests, maps SSE events to StreamEvent cases, accumulates input_json_delta. NSLock-protected cancel token for synchronous `abort()`. Logs every request and response via `Logger.api`.
+- `Tests/Helpers/MockAPIClient.swift` — Queued responses, captured requests, `blockPost` flag for abort tests.
+- `Tests/Helpers/MockModelProvider.swift` — Queued responses + streams, call count, recorded args, abort flag. FIFO dequeue. fatalError on empty queue (developer error).
+- `Tests/Helpers/TestFixtures.swift` — Loads fixtures from `Tests/Fixtures/` using `#file` path.
+- `Tests/Fixtures/text_response.json`, `tool_use_response.json`, `mixed_response.json`, `error_response.json` — API response fixtures.
+- `Tests/Fixtures/streaming_text.txt`, `streaming_tool_use.txt` — SSE stream fixtures.
+- `Tests/CoreTests/TypesTests.swift` — 11 tests: Codable round-trips, API format correctness.
+- `Tests/CoreTests/SSEParserTests.swift` — 6 tests: single event, multiple events, ping, partial chunks, no-trailing-newline, comments.
+- `Tests/CoreTests/AnthropicProviderTests.swift` — 15 tests: request format, response parsing, error handling, abort, streaming.
+- `Tests/CoreTests/MockModelProviderTests.swift` — 6 tests: FIFO order, recorded args, call count, abort flag, streaming.
+
+**Total tests: 67 (was 28, added 39)**
+
+**Decisions:**
+- `JSONValue` bool check before number check — Swift decodes JSON `true`/`false` as `Double` if tried first.
+- `Message` encodes single-text-block content as string shorthand; always decodes both forms.
+- `AsyncThrowingStream` (not `AsyncStream`) for `sendStreaming` — mid-stream errors (network drop, malformed SSE) must be deliverable.
+- `system: String?` added to both protocol methods — Anthropic API takes it as a top-level parameter, not a message.
+- `AnthropicProvider` is `final class @unchecked Sendable` with NSLock — `abort()` must be synchronous.
+- Cancel token stored as `(() -> Void)?` closure — simpler than type-erasing `Task<T, E>`.
+- `SSEParser` handles no-trailing-newline by processing remaining buffer content after stream ends.
+- `xcodegen generate` needed after adding new source files — run it whenever new files are added.
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 67 tests, all green
+5. No new UI — these are infrastructure components
 
 ---
 

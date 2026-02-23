@@ -1,0 +1,1 @@
+{"id":"msg_test02","type":"message","role":"assistant","content":[{"type":"tool_use","id":"toolu_test01","name":"system_info","input":{}}],"model":"claude-opus-4-6","stop_reason":"tool_use","stop_sequence":null,"usage":{"input_tokens":100,"output_tokens":50}}

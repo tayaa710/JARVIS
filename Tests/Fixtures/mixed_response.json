@@ -1,0 +1,1 @@
+{"id":"msg_test03","type":"message","role":"assistant","content":[{"type":"text","text":"Let me check that for you."},{"type":"tool_use","id":"toolu_test02","name":"get_weather","input":{"location":"San Francisco, CA"}}],"model":"claude-opus-4-6","stop_reason":"tool_use","stop_sequence":null,"usage":{"input_tokens":80,"output_tokens":60}}

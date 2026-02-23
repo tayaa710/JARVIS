@@ -1,3 +1,3 @@
 protocol PolicyEngine: Sendable {
-    func evaluate(call: ToolCall, riskLevel: RiskLevel) -> PolicyDecision
+    func evaluate(call: ToolUse, riskLevel: RiskLevel) -> PolicyDecision
 }

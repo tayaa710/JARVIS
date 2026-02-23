@@ -10,11 +10,17 @@ struct PlaceholderTests {
 
     @Test func testModelProviderProtocolConformance() {
         struct MockProvider: ModelProvider {
-            func send(messages: [Message], tools: [ToolDefinition]) async throws -> Response {
-                Response()
+            func send(messages: [Message], tools: [ToolDefinition], system: String?) async throws -> Response {
+                Response(
+                    id: "test",
+                    model: "claude-opus-4-6",
+                    content: [.text("hi")],
+                    stopReason: .endTurn,
+                    usage: Usage(inputTokens: 1, outputTokens: 1)
+                )
             }
-            func sendStreaming(messages: [Message], tools: [ToolDefinition]) -> AsyncStream<StreamEvent> {
-                AsyncStream { continuation in
+            func sendStreaming(messages: [Message], tools: [ToolDefinition], system: String?) -> AsyncThrowingStream<StreamEvent, Error> {
+                AsyncThrowingStream { continuation in
                     continuation.finish()
                 }
             }
@@ -26,9 +32,15 @@ struct PlaceholderTests {
 
     @Test func testToolExecutorProtocolConformance() {
         struct MockExecutor: ToolExecutor {
-            var definition: ToolDefinition { ToolDefinition() }
+            var definition: ToolDefinition {
+                ToolDefinition(
+                    name: "mock",
+                    description: "A mock tool",
+                    inputSchema: .object([:])
+                )
+            }
             func execute(arguments: [String: String]) async throws -> ToolResult {
-                ToolResult()
+                ToolResult(toolUseId: "tu_mock", content: "ok", isError: false)
             }
         }
         let executor: any ToolExecutor = MockExecutor()
@@ -40,8 +52,10 @@ struct PlaceholderTests {
             func register(_ executor: any ToolExecutor) throws {}
             func executor(for toolId: String) -> (any ToolExecutor)? { nil }
             func allDefinitions() -> [ToolDefinition] { [] }
-            func validate(call: ToolCall) throws {}
-            func dispatch(call: ToolCall) async throws -> ToolResult { ToolResult() }
+            func validate(call: ToolUse) throws {}
+            func dispatch(call: ToolUse) async throws -> ToolResult {
+                ToolResult(toolUseId: call.id, content: "ok", isError: false)
+            }
         }
         let registry: any ToolRegistry = MockRegistry()
         #expect(registry is MockRegistry)
@@ -49,7 +63,7 @@ struct PlaceholderTests {
 
     @Test func testPolicyEngineProtocolConformance() {
         struct MockPolicyEngine: PolicyEngine {
-            func evaluate(call: ToolCall, riskLevel: RiskLevel) -> PolicyDecision {
+            func evaluate(call: ToolUse, riskLevel: RiskLevel) -> PolicyDecision {
                 .allow
             }
         }
