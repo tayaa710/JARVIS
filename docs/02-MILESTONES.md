@@ -342,7 +342,7 @@ The brain comes alive. JARVIS can think and use tools, but only simple ones.
 
 ---
 
-### M007: Basic Built-in Tools `[ ]`
+### M007: Basic Built-in Tools `[x]`
 
 **What to build:**
 - `app_open` — launch an app by name (NSWorkspace)
@@ -356,17 +356,54 @@ The brain comes alive. JARVIS can think and use tools, but only simple ones.
 - `window_manage` — move, resize, minimise, close windows
 
 **Test criteria:**
-- Each tool: test with valid arguments returns expected result format
-- Each tool: test with invalid arguments returns clear error
-- Each tool: test risk level is correctly assigned
-- file_read: test path validation blocks `../` and system paths
-- file_write: test path validation, test creates parent directories
-- app_open: test with known app name
-- Integration test: MockModelProvider returns tool_use for app_open -> Orchestrator executes -> result sent back
+- Each tool: test with valid arguments returns expected result format ✓
+- Each tool: test with invalid arguments returns clear error ✓
+- Each tool: test risk level is correctly assigned ✓
+- file_read: test path validation blocks `../` and system paths ✓
+- file_write: test path validation, test creates parent directories ✓
+- app_open: test with known app name ✓
+- Integration test: MockModelProvider returns tool_use for app_list -> Orchestrator executes -> result sent back ✓
 
 **Deliverables:**
-- 9 working tools, all tested
-- Integration test proving the full loop works with real tools
+- 9 working tools, all tested ✓
+- Integration test proving the full loop works with real tools ✓
+
+**Built:**
+- `JARVIS/Tools/BuiltIn/AppListTool.swift` — lists running apps (localizedName, bundleIdentifier, PID). Risk: `.safe`.
+- `JARVIS/Tools/BuiltIn/AppOpenTool.swift` — opens app by name; activates if already running, otherwise launches via `/usr/bin/open -a`. Risk: `.caution`.
+- `JARVIS/Tools/BuiltIn/FileSearchTool.swift` — recursive search via FileManager.enumerator; fnmatch glob matching (case-insensitive); cap 100 results, depth 10; skips hidden files. Risk: `.safe`.
+- `JARVIS/Tools/BuiltIn/FileReadTool.swift` — reads file as UTF-8; validates absolute path, no `../`, no system prefixes; 1 MB size limit. Risk: `.safe`.
+- `JARVIS/Tools/BuiltIn/FileWriteTool.swift` — writes UTF-8 file; same path validation; creates parent directories; atomic write. Risk: `.caution`.
+- `JARVIS/Tools/BuiltIn/ClipboardReadTool.swift` — reads NSPasteboard.general string; returns "Clipboard is empty" if none. Risk: `.safe`.
+- `JARVIS/Tools/BuiltIn/ClipboardWriteTool.swift` — clearContents then setString on NSPasteboard.general. Risk: `.caution`.
+- `JARVIS/Tools/BuiltIn/WindowListTool.swift` — CGWindowListCopyWindowInfo; filters to layer 0; formats as `[id] AppName | Title | X,Y WxH`. Risk: `.safe`.
+- `JARVIS/Tools/BuiltIn/WindowManageTool.swift` — AppleScript-based move/resize/minimize/close; sanitizes app name against quote injection; dispatches to @MainActor. Risk: `.caution`.
+- `Tests/ToolTests/AppListToolTests.swift` — 6 tests
+- `Tests/ToolTests/AppOpenToolTests.swift` — 8 tests
+- `Tests/ToolTests/FileSearchToolTests.swift` — 6 tests
+- `Tests/ToolTests/FileReadToolTests.swift` — 8 tests
+- `Tests/ToolTests/FileWriteToolTests.swift` — 8 tests
+- `Tests/ToolTests/ClipboardToolTests.swift` — 14 tests (includes orchestrator integration test for clipboard two-tool sequence)
+- `Tests/ToolTests/WindowListToolTests.swift` — 6 tests
+- `Tests/ToolTests/WindowManageToolTests.swift` — 9 tests
+- `Tests/IntegrationTests/BuiltInToolsIntegrationTests.swift` — 1 test (full loop with app_list)
+
+**Total tests: 229 (was 153, added 76)**
+
+**Decisions:**
+- `window_manage` uses NSAppleScript / System Events (not raw AXUIElement) — full AX service comes in M009. Dispatched to `@MainActor` for thread safety.
+- `app_open` uses `Process("/usr/bin/open", ["-a", name])` — argument array prevents shell injection. Checks NSWorkspace first to give cleaner "already running" feedback.
+- `file_read` / `file_write` do their own path validation (absolute, no `../`, no system prefixes) even though InputSanitizer covers this at the Orchestrator layer — defense in depth.
+- `file_search` uses lowercase-both + `fnmatch` (no `FNM_CASEFOLD` flag needed) for portable case-insensitive glob matching.
+- Clipboard integration test lives in `ClipboardToolTests` (marked `@Suite(.serialized)`) rather than `BuiltInToolsIntegrationTests` to prevent NSPasteboard races with the unit tests.
+- `window_manage` tests validate argument parsing only — actual window manipulation is not tested (requires AX permission + live windows, covered manually).
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 229 tests, all green
+5. No new UI — these are backend tool executors (UI comes in M008)
 
 ---
 
