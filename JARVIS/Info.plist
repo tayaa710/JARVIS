@@ -12,5 +12,9 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
+    <key>NSAccessibilityUsageDescription</key>
+    <string>JARVIS uses Accessibility to read and control the UI of other apps on your Mac.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>JARVIS uses the microphone to listen for your voice commands.</string>
 </dict>
 </plist>

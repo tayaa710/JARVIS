@@ -565,6 +565,12 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					0F6CA2CF9091CE89DFF72E1D = {
+						DevelopmentTeam = E627YHCMQ2;
+						ProvisioningStyle = Automatic;
+					};
+				};
 			};
 			buildConfigurationList = E441122F760D220AA6AA3E06 /* Build configuration list for PBXProject "JARVIS" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -822,8 +828,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = JARVIS/JARVIS.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E627YHCMQ2;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = JARVIS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -898,8 +907,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = JARVIS/JARVIS.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = E627YHCMQ2;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = JARVIS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
