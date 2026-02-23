@@ -65,6 +65,45 @@ final class AccessibilityServiceImpl: AccessibilityServiceProtocol, @unchecked S
         }
     }
 
+    func performAction(ref: String, action: String) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            axQueue.async {
+                guard let element = self._refMap[ref] else {
+                    continuation.resume(throwing: AXServiceError.invalidElement)
+                    return
+                }
+                let result = self.axProvider.performAction(element, action: action)
+                continuation.resume(returning: result)
+            }
+        }
+    }
+
+    func setValue(ref: String, attribute: String, value: String) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            axQueue.async {
+                guard let element = self._refMap[ref] else {
+                    continuation.resume(throwing: AXServiceError.invalidElement)
+                    return
+                }
+                let result = self.axProvider.setAttributeValue(element, attribute: attribute, value: value as CFTypeRef)
+                continuation.resume(returning: result)
+            }
+        }
+    }
+
+    func setFocused(ref: String) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            axQueue.async {
+                guard let element = self._refMap[ref] else {
+                    continuation.resume(throwing: AXServiceError.invalidElement)
+                    return
+                }
+                let result = self.axProvider.setAttributeValue(element, attribute: "AXFocused", value: kCFBooleanTrue as CFTypeRef)
+                continuation.resume(returning: result)
+            }
+        }
+    }
+
     // MARK: - Private Walk
 
     private func performWalk(maxDepth: Int, maxElements: Int) throws -> UITreeSnapshot {

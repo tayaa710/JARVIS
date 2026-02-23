@@ -60,6 +60,10 @@ struct SystemAXProvider: AXProviding {
         AXUIElementPerformAction(element, action as CFString) == .success
     }
 
+    func setAttributeValue(_ element: AXUIElement, attribute: String, value: CFTypeRef) -> Bool {
+        AXUIElementSetAttributeValue(element, attribute as CFString, value) == .success
+    }
+
     func createApplicationElement(pid: pid_t) -> AXUIElement {
         AXUIElementCreateApplication(pid)
     }

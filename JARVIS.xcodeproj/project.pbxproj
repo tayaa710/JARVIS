@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -146,7 +146,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		02D4D87BF7338D15B9C076C1 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		02D4D87BF7338D15B9C076C1 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		030A2D52C5F38E40D21D1DDE /* BuiltInToolRegistration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInToolRegistration.swift; sourceTree = "<group>"; };
 		051F394ECB5B50F887E805DC /* UISnapshotFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UISnapshotFormatter.swift; sourceTree = "<group>"; };
 		05696F1F07EA6791053C9714 /* AccessibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
@@ -169,7 +169,7 @@
 		2C5073F27304B48891B26900 /* LoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerTests.swift; sourceTree = "<group>"; };
 		2CC1E19DF55D7CF258602871 /* MockModelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockModelProvider.swift; sourceTree = "<group>"; };
 		2D02F8A2B8810D35EA143730 /* FileSearchToolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSearchToolTests.swift; sourceTree = "<group>"; };
-		2F83C1630CAC0BFB366E7C05 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		2F83C1630CAC0BFB366E7C05 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		3392018EE4101A4D3B02413F /* KeyboardTypeTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTypeTool.swift; sourceTree = "<group>"; };
 		344D9A2DB5CAE8393362D893 /* PolicyEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolicyEngineTests.swift; sourceTree = "<group>"; };
 		34C8F7D19BB0D71B397BFF14 /* mixed_response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = mixed_response.json; sourceTree = "<group>"; };
@@ -177,12 +177,12 @@
 		38A919D9A273952F349C36F7 /* AccessibilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceTests.swift; sourceTree = "<group>"; };
 		3A01DF2685B896690AE04C1E /* MessageBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
 		3A7E068A1E34BE34BE245EFA /* tool_use_response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = tool_use_response.json; sourceTree = "<group>"; };
-		3C7FE8AC15B41CC5C387BEAA /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		3C7FE8AC15B41CC5C387BEAA /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		3CD79563AD7931122DACD108 /* FileWriteTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWriteTool.swift; sourceTree = "<group>"; };
-		3E232E91C78764FBD41E0B51 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		3E232E91C78764FBD41E0B51 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		42E4972217D74F66E5609F31 /* BuiltInToolsIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInToolsIntegrationTests.swift; sourceTree = "<group>"; };
 		439C25C5E02AF00357F0DA44 /* OrchestratorStreamingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrchestratorStreamingTests.swift; sourceTree = "<group>"; };
-		46238B6BB93DC0DBDB353001 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		46238B6BB93DC0DBDB353001 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		4A70B28CBDA5404EBBA3CD91 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		56E5407EB529390105E9A21C /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
 		57926FF438FA81347EDC78F8 /* AXActionTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AXActionTool.swift; sourceTree = "<group>"; };
@@ -193,18 +193,18 @@
 		6154676E817BF4AAEF243EB6 /* SystemInfoTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemInfoTool.swift; sourceTree = "<group>"; };
 		62A030E25A8CDF51D01753AC /* MockInputService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInputService.swift; sourceTree = "<group>"; };
 		659F2874B86BA8482BECD788 /* KeyCodeMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCodeMapTests.swift; sourceTree = "<group>"; };
-		65B83ACDA9E06E984E4F198D /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		65B83ACDA9E06E984E4F198D /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		672ADC4C1C6719AABD4BC618 /* AppListToolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppListToolTests.swift; sourceTree = "<group>"; };
-		694CFBAA1E9EEDD4EA7C36FE /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		694CFBAA1E9EEDD4EA7C36FE /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		6A4347E38FD41C2BA6958E56 /* JARVIS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = JARVIS.entitlements; sourceTree = "<group>"; };
 		6ADF0584666F783267647143 /* SchemaValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaValidatorTests.swift; sourceTree = "<group>"; };
 		6C91C45A95EB030B1D1069D2 /* Orchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Orchestrator.swift; sourceTree = "<group>"; };
 		6EAB7333EBE254265FD9399C /* MouseMoveTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseMoveTool.swift; sourceTree = "<group>"; };
 		6EEE19D2BF51B9712E900275 /* JARVISApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JARVISApp.swift; sourceTree = "<group>"; };
 		75369FA131C7995E23D87ED6 /* VisionAnalyzeTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionAnalyzeTool.swift; sourceTree = "<group>"; };
-		75907A7A8155C31FB5E1E545 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		75907A7A8155C31FB5E1E545 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		76A82273DF689415790756E3 /* ToolRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRegistryTests.swift; sourceTree = "<group>"; };
-		77572CF98570D7728856A304 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		77572CF98570D7728856A304 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		77C580778A61777CE3E05365 /* MouseClickToolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseClickToolTests.swift; sourceTree = "<group>"; };
 		7939B72C863530E68AE5CF54 /* ChatViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModelTests.swift; sourceTree = "<group>"; };
 		79517505C52F17AE2A9EFA7D /* MockAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAPIClient.swift; sourceTree = "<group>"; };
@@ -218,7 +218,7 @@
 		82C17AC953073F46487AA0E2 /* AppOpenTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppOpenTool.swift; sourceTree = "<group>"; };
 		84961ADC10DD1E048FDAEA45 /* ScreenshotTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTool.swift; sourceTree = "<group>"; };
 		84BFC7D634781BC6F0518518 /* AccessibilityServiceImpl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceImpl.swift; sourceTree = "<group>"; };
-		85A5541110336F7A97450FEE /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		85A5541110336F7A97450FEE /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		863CC96D7DCCF5F3AA63A376 /* StatusIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusIndicatorView.swift; sourceTree = "<group>"; };
 		892AD5B1EB417F3589E3EDC0 /* error_response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = error_response.json; sourceTree = "<group>"; };
 		89B9C2E080BB09AEAF294240 /* StubToolExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubToolExecutor.swift; sourceTree = "<group>"; };
@@ -226,7 +226,7 @@
 		8B76F3B6447F9546E5827153 /* WindowManageTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManageTool.swift; sourceTree = "<group>"; };
 		914C3231A0917ADD570FF4D0 /* AnthropicProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicProvider.swift; sourceTree = "<group>"; };
 		915409FBA02F7454211A7D3A /* OrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrchestratorTests.swift; sourceTree = "<group>"; };
-		9196BECB436ABEA40EBC803A /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		9196BECB436ABEA40EBC803A /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		94113B31DBCED49108F09CF5 /* ClipboardToolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardToolTests.swift; sourceTree = "<group>"; };
 		947B1B21D737084B9F5C32D1 /* MouseClickTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseClickTool.swift; sourceTree = "<group>"; };
 		94B568EDFBC4563C9DA3D7E9 /* InputToolsIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputToolsIntegrationTests.swift; sourceTree = "<group>"; };
@@ -270,7 +270,7 @@
 		D6ADF9F2A2D1F55CFEA2EDA3 /* FileSearchTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSearchTool.swift; sourceTree = "<group>"; };
 		D753814C6EA4679BF2E07088 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		DBE6CDFF2E6B3AEAFD720F34 /* JARVIS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JARVIS.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		DC55B2670AD898C833E8D3F4 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		DC55B2670AD898C833E8D3F4 /* .gitkeep */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		E17A019EAC9DF54206F9CCC5 /* SSEParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSEParserTests.swift; sourceTree = "<group>"; };
 		E5694C2FC556377D52CD7B9D /* GetUIStateTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetUIStateTool.swift; sourceTree = "<group>"; };
 		E5AAD0165639079EA973DF6C /* SystemInfoToolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemInfoToolTests.swift; sourceTree = "<group>"; };
@@ -684,7 +684,6 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					0F6CA2CF9091CE89DFF72E1D = {
-						DevelopmentTeam = E627YHCMQ2;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -703,7 +702,6 @@
 				708A46F0EBFBF31DDD85FBA4 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				E3CF08CD924F91C92E5488BC /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -988,7 +986,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = E627YHCMQ2;
+				DEVELOPMENT_TEAM = 2AU9UU8X4D;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = JARVIS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1067,7 +1065,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = E627YHCMQ2;
+				DEVELOPMENT_TEAM = 2AU9UU8X4D;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = JARVIS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -38,6 +38,9 @@ protocol AXProviding: Sendable {
     /// Performs a named action (e.g. kAXPressAction) on an element. Returns true on success.
     func performAction(_ element: AXUIElement, action: String) -> Bool
 
+    /// Sets an attribute value on an element. Returns true on success.
+    func setAttributeValue(_ element: AXUIElement, attribute: String, value: CFTypeRef) -> Bool
+
     /// Creates an AXUIElement representing an application with the given PID.
     func createApplicationElement(pid: pid_t) -> AXUIElement
 

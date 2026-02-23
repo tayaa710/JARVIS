@@ -48,11 +48,17 @@ final class MockAXProvider: AXProviding, @unchecked Sendable {
     // MARK: - Configuration
 
     var isProcessTrustedResult: Bool = true
+    var performActionResult: Bool = true
 
     // Set to nil to simulate "no frontmost app"
     private var configuredPID: pid_t = 0
     private var configuredName: String = ""
     private var configuredBundleId: String = ""
+
+    // MARK: - Call Recording
+
+    var performedActions: [(element: AXElementKey, action: String)] = []
+    var setValueCalls: [(element: AXElementKey, attribute: String)] = []
 
     // MARK: - Internal Tree State
 
@@ -144,7 +150,15 @@ final class MockAXProvider: AXProviding, @unchecked Sendable {
 
     func getElementAtPosition(_ app: AXUIElement, x: Float, y: Float) -> AXUIElement? { nil }
 
-    func performAction(_ element: AXUIElement, action: String) -> Bool { false }
+    func performAction(_ element: AXUIElement, action: String) -> Bool {
+        performedActions.append((element: AXElementKey(element: element), action: action))
+        return performActionResult
+    }
+
+    func setAttributeValue(_ element: AXUIElement, attribute: String, value: CFTypeRef) -> Bool {
+        setValueCalls.append((element: AXElementKey(element: element), attribute: attribute))
+        return performActionResult
+    }
 
     func createApplicationElement(pid: pid_t) -> AXUIElement {
         // Return the cached root element when the configured PID is requested,

@@ -26,4 +26,16 @@ protocol AccessibilityServiceProtocol: Sendable {
 
     /// Clears the ref map. Call after an action changes the UI to prevent stale refs.
     func invalidateRefMap()
+
+    /// Performs a named AX action (e.g. "AXPress") on the element identified by ref.
+    /// - Throws: `AXServiceError.invalidElement` if the ref is not in the current ref map.
+    func performAction(ref: String, action: String) async throws -> Bool
+
+    /// Sets a string attribute on the element identified by ref.
+    /// - Throws: `AXServiceError.invalidElement` if the ref is not in the current ref map.
+    func setValue(ref: String, attribute: String, value: String) async throws -> Bool
+
+    /// Sets the focused attribute to true on the element identified by ref.
+    /// - Throws: `AXServiceError.invalidElement` if the ref is not in the current ref map.
+    func setFocused(ref: String) async throws -> Bool
 }
