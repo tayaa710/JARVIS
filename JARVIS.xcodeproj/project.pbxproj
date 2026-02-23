@@ -8,15 +8,21 @@
 
 /* Begin PBXBuildFile section */
 		12591532333C6399E247D2CE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4A70B28CBDA5404EBBA3CD91 /* Assets.xcassets */; };
+		18E0BD90DA59AC2CA56D1A74 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE6D5AED37A821C053577002 /* APIClient.swift */; };
+		2B982DA7FBC0EEDC988D7E07 /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D649DDF0ED8B1DFE1A9EA1B7 /* KeychainHelperTests.swift */; };
 		2D5C6116A5ACB75B1D80E0F8 /* ToolRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0816F19632B71EDEFD239AF6 /* ToolRegistry.swift */; };
 		36A69B470B414FB117BBFF90 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = ABC69980C1896394985E921D /* Sparkle */; };
 		5FDDE2FF10F815F52664113A /* PolicyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21BAFF8CCA6485D3EE2D9234 /* PolicyEngine.swift */; };
 		62808B511820269F6BEC4428 /* PlaceholderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96A54035B484E6C43DEEE82 /* PlaceholderTests.swift */; };
 		6589FD2E3DEC53501DC0E997 /* ToolExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9EE558CD3E3DEEE5CEBB5BB /* ToolExecutor.swift */; };
 		7FF1402EAA20A6F5449F1343 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = D3B487FF07E678A7DB166CC8 /* KeyboardShortcuts */; };
+		9C296171C97E600E3C19E873 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F93EE674D02B5D9EC3C2571B /* APIClientTests.swift */; };
 		A0CE3A329E003CB4BD21B5E0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130BB03FB5E243D4DBA6FB75 /* ContentView.swift */; };
+		A622A278BE0E8E3733F1D189 /* LoggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5073F27304B48891B26900 /* LoggerTests.swift */; };
 		AC7220297180EC75C7A31876 /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99642283F003A220D69A2BD /* Types.swift */; };
 		B8C7F9F7F3CCF4EA527A4972 /* JARVISApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EEE19D2BF51B9712E900275 /* JARVISApp.swift */; };
+		C64821CBD7E61DA5222CB84C /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A8D24BFAE50E7691C3F225B /* KeychainHelper.swift */; };
+		F841FFBE3B4A1F86DEB31A61 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = D753814C6EA4679BF2E07088 /* Logger.swift */; };
 		FAB1C3C764ED8F703E313309 /* ModelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98ED1758EF0B5BCEFB2F339A /* ModelProvider.swift */; };
 /* End PBXBuildFile section */
 
@@ -35,6 +41,8 @@
 		0816F19632B71EDEFD239AF6 /* ToolRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolRegistry.swift; sourceTree = "<group>"; };
 		130BB03FB5E243D4DBA6FB75 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		21BAFF8CCA6485D3EE2D9234 /* PolicyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolicyEngine.swift; sourceTree = "<group>"; };
+		2A8D24BFAE50E7691C3F225B /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		2C5073F27304B48891B26900 /* LoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggerTests.swift; sourceTree = "<group>"; };
 		2F83C1630CAC0BFB366E7C05 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		3C7FE8AC15B41CC5C387BEAA /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		3E232E91C78764FBD41E0B51 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
@@ -49,11 +57,15 @@
 		85A5541110336F7A97450FEE /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		9196BECB436ABEA40EBC803A /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		98ED1758EF0B5BCEFB2F339A /* ModelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelProvider.swift; sourceTree = "<group>"; };
+		AE6D5AED37A821C053577002 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		B96A54035B484E6C43DEEE82 /* PlaceholderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderTests.swift; sourceTree = "<group>"; };
 		BC57BDC1AD7F2121361BDECD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D649DDF0ED8B1DFE1A9EA1B7 /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
+		D753814C6EA4679BF2E07088 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		DBE6CDFF2E6B3AEAFD720F34 /* JARVIS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JARVIS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DC55B2670AD898C833E8D3F4 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		F89A5FD5332EC5B9ED8DD165 /* JARVISTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JARVISTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F93EE674D02B5D9EC3C2571B /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		F99642283F003A220D69A2BD /* Types.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Types.swift; sourceTree = "<group>"; };
 		F9EE558CD3E3DEEE5CEBB5BB /* ToolExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolExecutor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -90,6 +102,9 @@
 		1738B4F0193DFC8C558E1EFE /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				AE6D5AED37A821C053577002 /* APIClient.swift */,
+				2A8D24BFAE50E7691C3F225B /* KeychainHelper.swift */,
+				D753814C6EA4679BF2E07088 /* Logger.swift */,
 				62B70E87A5ACF702F9BE1EBD /* Extensions */,
 			);
 			path = Shared;
@@ -220,6 +235,9 @@
 		DAA18709484DFB1C727547E8 /* CoreTests */ = {
 			isa = PBXGroup;
 			children = (
+				F93EE674D02B5D9EC3C2571B /* APIClientTests.swift */,
+				D649DDF0ED8B1DFE1A9EA1B7 /* KeychainHelperTests.swift */,
+				2C5073F27304B48891B26900 /* LoggerTests.swift */,
 				B96A54035B484E6C43DEEE82 /* PlaceholderTests.swift */,
 			);
 			path = CoreTests;
@@ -361,8 +379,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				18E0BD90DA59AC2CA56D1A74 /* APIClient.swift in Sources */,
 				A0CE3A329E003CB4BD21B5E0 /* ContentView.swift in Sources */,
 				B8C7F9F7F3CCF4EA527A4972 /* JARVISApp.swift in Sources */,
+				C64821CBD7E61DA5222CB84C /* KeychainHelper.swift in Sources */,
+				F841FFBE3B4A1F86DEB31A61 /* Logger.swift in Sources */,
 				FAB1C3C764ED8F703E313309 /* ModelProvider.swift in Sources */,
 				5FDDE2FF10F815F52664113A /* PolicyEngine.swift in Sources */,
 				6589FD2E3DEC53501DC0E997 /* ToolExecutor.swift in Sources */,
@@ -375,6 +396,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9C296171C97E600E3C19E873 /* APIClientTests.swift in Sources */,
+				2B982DA7FBC0EEDC988D7E07 /* KeychainHelperTests.swift in Sources */,
+				A622A278BE0E8E3733F1D189 /* LoggerTests.swift in Sources */,
 				62808B511820269F6BEC4428 /* PlaceholderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -69,7 +69,7 @@ The skeleton. Nothing works yet, but the project compiles, tests run, and the ar
 
 ---
 
-### M002: Logging and API Client `[ ]`
+### M002: Logging and API Client `[x]`
 
 **What to build:**
 - `Logger.swift` — wrapper around `os.log` with subsystems per component. Convenience methods: `Logger.orchestrator.info(...)`, `Logger.tools.error(...)`, etc.
@@ -77,14 +77,38 @@ The skeleton. Nothing works yet, but the project compiles, tests run, and the ar
 - `KeychainHelper.swift` — read/write/delete secrets from macOS Keychain.
 
 **Test criteria:**
-- Logger: verify log output contains correct subsystem and level (unit test with mock log handler)
-- APIClient: test request building, header injection, timeout behavior, retry logic (unit tests with mock URLProtocol)
-- APIClient: test streaming response parsing
-- KeychainHelper: write, read, delete, overwrite (integration test against real Keychain)
+- Logger: verify log output contains correct subsystem and level (unit test with mock log handler) ✓
+- APIClient: test request building, header injection, timeout behavior, retry logic (unit tests with mock URLProtocol) ✓
+- APIClient: test streaming response parsing ✓
+- KeychainHelper: write, read, delete, overwrite (integration test against real Keychain) ✓
 
 **Deliverables:**
-- All three utilities with full test coverage
-- No `NSLog` or `print` statements anywhere — only Logger
+- All three utilities with full test coverage ✓
+- No `NSLog` or `print` statements anywhere — only Logger ✓
+
+**Built:**
+- `JARVIS/Shared/Logger.swift` — `LogLevel` enum, `LogHandler` protocol, `OSLogHandler` (production), `JARVISLogger` struct, `Logger` namespace enum with 9 pre-configured loggers (orchestrator, tools, api, policy, voice, memory, ui, keychain, app)
+- `JARVIS/Shared/KeychainHelper.swift` — `KeychainHelperProtocol`, `KeychainError` enum, `KeychainHelper` struct wrapping Security.framework with save/read/delete + String convenience overloads
+- `JARVIS/Shared/APIClient.swift` — `APIClientError` enum, `APIClientProtocol`, `APIClient` with get/post/postStreaming, exponential backoff retry on 429/5xx, Retry-After header support, URLSessionConfiguration injection for testing
+- `Tests/CoreTests/LoggerTests.swift` — 6 tests
+- `Tests/CoreTests/KeychainHelperTests.swift` — 6 tests (real Keychain, isolated to "com.aidaemon.test" service)
+- `Tests/CoreTests/APIClientTests.swift` — 11 tests (MockURLProtocol, serialized to avoid static state races)
+
+**Total tests: 28 (was 5, added 23)**
+
+**Decisions:**
+- `enum Logger` intentionally shadows `os.Logger` within the JARVIS module. Use `os.Logger` inside Logger.swift itself. External callers get the clean `Logger.orchestrator.info(...)` API.
+- `APIClient.postStreaming` returns raw `AsyncThrowingStream<Data, Error>` — SSE parsing will be done in `AnthropicProvider` (M003), not here.
+- Retry-After header is respected on 429; falls back to exponential backoff if absent.
+- `@Suite(.serialized)` on APIClientTests because `MockURLProtocol` uses static state — parallel execution caused races.
+- KeychainHelper tests use `service: "com.aidaemon.test"` + UUID keys so they never pollute real app Keychain entries.
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 28 tests, all green
+5. No new UI to verify — these are infrastructure utilities
 
 ---
 
