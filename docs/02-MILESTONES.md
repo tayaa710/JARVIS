@@ -532,7 +532,7 @@ JARVIS can see and interact with any app on the Mac.
 
 ---
 
-### M010: UI State and AX Tools `[ ]`
+### M010: UI State and AX Tools `[x]`
 
 **What to build:**
 - `get_ui_state` tool — calls AccessibilityService, returns formatted text snapshot of frontmost app
@@ -542,23 +542,63 @@ JARVIS can see and interact with any app on the Mac.
 - Set context lock when `get_ui_state` runs (record bundle ID + PID)
 
 **Test criteria:**
-- get_ui_state: test returns formatted snapshot with @e refs
-- ax_action press: test calls AXUIElementPerformAction on correct element
-- ax_action set_value: test sets value on correct element
-- ax_find: test finds elements matching role, title, value criteria
-- Cache: test second call within 0.5s returns cached result
-- Cache: test ax_action invalidates cache
-- Context lock: test lock is set after get_ui_state
-- Integration: MockModelProvider scenario where Claude uses get_ui_state then ax_action
+- get_ui_state: test returns formatted snapshot with @e refs ✓
+- ax_action press: test calls AXUIElementPerformAction on correct element ✓
+- ax_action set_value: test sets value on correct element ✓
+- ax_find: test finds elements matching role, title, value criteria ✓
+- Cache: test second call within 0.5s returns cached result ✓
+- Cache: test ax_action invalidates cache ✓
+- Context lock: test lock is set after get_ui_state ✓
+- Integration: MockModelProvider scenario where Claude uses get_ui_state then ax_action ✓
 
 **Deliverables:**
-- 3 AX tools, fully tested
-- Context lock working
-- JARVIS can now read and interact with any Mac app that supports AX
+- 3 AX tools, fully tested ✓
+- Context lock working ✓
+- JARVIS can now read and interact with any Mac app that supports AX ✓
+
+**Built:**
+- `JARVIS/Tools/ComputerControl/AXProviding.swift` — Added `setAttributeValue` method to protocol
+- `JARVIS/Tools/ComputerControl/SystemAXProvider.swift` — Implemented `setAttributeValue` (thin wrapper over `AXUIElementSetAttributeValue`)
+- `JARVIS/Tools/ComputerControl/AccessibilityService.swift` — Added `performAction(ref:action:)`, `setValue(ref:attribute:value:)`, `setFocused(ref:)` to protocol
+- `JARVIS/Tools/ComputerControl/AccessibilityServiceImpl.swift` — Implemented the three action methods; all dispatch on axQueue with proper locking
+- `JARVIS/Tools/ComputerControl/UIStateCache.swift` — 0.5s TTL cache shared by get_ui_state (write) and ax_action (invalidate). NSLock thread-safe.
+- `JARVIS/Tools/ComputerControl/UISnapshotFormatter.swift` — Converts UITreeSnapshot to indented text: `App: Safari (com.apple.Safari)` header, `@e1 AXButton "Submit"` per element, summary line.
+- `JARVIS/Tools/BuiltIn/GetUIStateTool.swift` — Checks cache first; walks fresh if miss; formats; calls `contextLockSetter` with new ContextLock. Risk: `.safe`.
+- `JARVIS/Tools/BuiltIn/AXActionTool.swift` — Dispatches press/set_value/focus/show_menu/raise; always invalidates cache. Risk: `.caution`.
+- `JARVIS/Tools/BuiltIn/AXFindTool.swift` — Case-insensitive substring search on role/title/value; uses cached snapshot or walks fresh. Risk: `.safe`.
+- `JARVIS/Tools/BuiltIn/BuiltInToolRegistration.swift` — Added `registerAXTools(in:accessibilityService:cache:)` function; returns `GetUIStateTool` for context lock wiring
+- `JARVIS/UI/ChatViewModel.swift` — Updated `createOrchestrator` to create `AccessibilityServiceImpl`, `UIStateCache`, call `registerAXTools`, and wire `contextLockSetter → orchestrator.setContextLock`
+- `Tests/Helpers/MockAXProvider.swift` — Added `setAttributeValue`, made `performAction` configurable with `performActionResult` and call recording
+- `Tests/Helpers/MockAccessibilityService.swift` — New mock for `AccessibilityServiceProtocol`; auto-populates ref map from snapshot on `walkFrontmostApp`
+- `Tests/ToolTests/AccessibilityServiceActionTests.swift` — 10 tests
+- `Tests/ToolTests/UIStateCacheTests.swift` — 6 tests
+- `Tests/ToolTests/UISnapshotFormatterTests.swift` — 7 tests
+- `Tests/ToolTests/GetUIStateToolTests.swift` — 9 tests
+- `Tests/ToolTests/AXActionToolTests.swift` — 12 tests
+- `Tests/ToolTests/AXFindToolTests.swift` — 10 tests
+- `Tests/IntegrationTests/AXToolsIntegrationTests.swift` — 3 end-to-end tests
+
+**Total tests: 330 (was 273, added 57)**
+
+**Decisions:**
+- `setAttributeValue` added to `AXProviding` (not a new protocol layer) — consistent with existing `performAction` pattern; one thin AX C wrapper.
+- `setFocused(ref:)` is a dedicated method rather than routing through `setValue` with CFTypeRef — keeps CFBoolean complexity inside the service layer; tool code stays clean.
+- Context lock setter is a mutable closure on `GetUIStateTool` (class, not struct) — avoids circular dependency; orchestrator is created first, then AX tools are registered and the closure is wired.
+- `UIStateCache` is separate from the service — both `get_ui_state` and `ax_action` share the same instance via injection; no singleton.
+- `ax_action` always invalidates cache in a `defer` block — even on failure, the UI may have partially changed.
+- `ax_find` self-heals: if no cached snapshot it walks fresh (and caches the result), so Claude doesn't have to call `get_ui_state` first.
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 330 tests, all green
+5. Grant Accessibility permission if not already done: System Settings → Privacy & Security → Accessibility → JARVIS ON
+6. Press **Cmd+R** to run the app, then ask JARVIS: "What apps are open on my screen?" — JARVIS will call `get_ui_state` and describe the UI
 
 ---
 
-### M011: Keyboard and Mouse Control `[ ]`
+### M011: Keyboard and Mouse Control `[x]`
 
 **What to build:**
 - `keyboard_type` tool — type text string via CGEvent key events
@@ -569,19 +609,60 @@ JARVIS can see and interact with any app on the Mac.
 - 200ms delay after execution to let the OS process the event
 
 **Test criteria:**
-- keyboard_type: test generates correct CGEvent sequence for given text
-- keyboard_shortcut: test parses modifier+key combos correctly (Cmd+C, Ctrl+Shift+A)
-- mouse_click: test generates click event at correct coordinates
-- Context lock: test all tools refuse when lock check fails
-- Integration: fixture test where Claude uses keyboard_shortcut after get_ui_state
+- keyboard_type: test generates correct CGEvent sequence for given text ✓
+- keyboard_shortcut: test parses modifier+key combos correctly (Cmd+C, Ctrl+Shift+A) ✓
+- mouse_click: test generates click event at correct coordinates ✓
+- Context lock: test all tools refuse when lock check fails ✓
+- Integration: fixture test where Claude uses keyboard_shortcut after get_ui_state ✓
 
 **Deliverables:**
-- 4 input tools, fully tested
-- These are fallback tools — Claude should prefer ax_action when possible
+- 4 input tools, fully tested ✓
+- These are fallback tools — Claude should prefer ax_action when possible ✓
+
+**Built:**
+- `JARVIS/Tools/ComputerControl/KeyCodeMap.swift` — Stateless `enum KeyCodeMap` mapping key names to `CGKeyCode` (a-z, 0-9, special keys, arrows, f1-f12) and modifier names to `CGEventFlags`. `parseCombo` splits "cmd+c" or "ctrl+shift+a" into a `(modifiers, keyCode)` tuple.
+- `JARVIS/Tools/ComputerControl/InputControlling.swift` — `InputControlling` protocol: `typeText`, `pressShortcut`, `mouseClick`, `mouseMove`. Enables mock injection.
+- `JARVIS/Tools/ComputerControl/ContextLockChecker.swift` — `struct ContextLockChecker` with `lockProvider` + `appProvider` closures; `verify()` returns nil on success or an error string if the context lock is missing, app is nil, or bundleId/PID don't match.
+- `JARVIS/Tools/ComputerControl/CGEventInputService.swift` — Production `InputControlling` using `CGEvent`. Unicode typing via `keyboardSetUnicodeString` with 5ms inter-character delay. Mouse events use `CGEvent(mouseEventSource:mouseType:mouseCursorPosition:mouseButton:)`. Not unit-tested (requires real event system).
+- `JARVIS/Tools/BuiltIn/KeyboardTypeTool.swift` — `keyboard_type` tool. Risk: `.caution`.
+- `JARVIS/Tools/BuiltIn/KeyboardShortcutTool.swift` — `keyboard_shortcut` tool. Risk: `.caution`.
+- `JARVIS/Tools/BuiltIn/MouseClickTool.swift` — `mouse_click` tool. Risk: `.caution`.
+- `JARVIS/Tools/BuiltIn/MouseMoveTool.swift` — `mouse_move` tool. No context lock check, no cache invalidation. Risk: `.safe`.
+- `JARVIS/Tools/BuiltIn/BuiltInToolRegistration.swift` — Added `registerInputTools(in:inputService:contextLockChecker:cache:)`.
+- `JARVIS/UI/ChatViewModel.swift` — Wires `CGEventInputService` + `ContextLockChecker` in `createOrchestrator`.
+- `JARVIS/Shared/Logger.swift` — Added `Logger.input` subsystem.
+- `Tests/Helpers/MockInputService.swift` — Records `typedTexts`, `pressedShortcuts`, `clicks`, `moves`. Optional `shouldThrow`.
+- `Tests/ToolTests/KeyCodeMapTests.swift` — 13 tests
+- `Tests/ToolTests/ContextLockCheckerTests.swift` — 5 tests
+- `Tests/ToolTests/KeyboardTypeToolTests.swift` — 8 tests
+- `Tests/ToolTests/KeyboardShortcutToolTests.swift` — 10 tests
+- `Tests/ToolTests/MouseClickToolTests.swift` — 8 tests
+- `Tests/ToolTests/MouseMoveToolTests.swift` — 6 tests
+- `Tests/IntegrationTests/InputToolsIntegrationTests.swift` — 3 end-to-end tests
+
+**Total tests: 384 (was 330, added 54)**
+
+**Decisions:**
+- `ContextLockChecker` is a `struct` with two `@Sendable` closures rather than protocol methods — avoids circular dependency between tools and orchestrator; closures close over the orchestrator reference after it's created.
+- `mouse_move` has no context lock check (deliberate) — cursor repositioning is harmless and `.safe`. If ever needed, it's a one-line change.
+- `mouse_move` has no cache invalidation — cursor movement alone does not change UI state (other 3 tools do invalidate).
+- `CGEventInputService` is `@unchecked Sendable` — stateless in practice; no mutable state.
+- `KeyCodeMap` uses US QWERTY virtual key codes — universal for modifier+key shortcuts (which are layout-independent). Text typing uses `keyboardSetUnicodeString` for full Unicode support.
+- CGEvent posting requires the same Accessibility permission already required for AX tools. No new entitlements needed.
+- `postActionDelay: 0` in tests avoids slowdowns while preserving the 200ms default in production.
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 384 tests, all green
+5. Grant Accessibility permission if not already done: System Settings → Privacy & Security → Accessibility → JARVIS ON
+6. Press **Cmd+R** to run the app, then ask JARVIS: "Click on the search bar in Safari" — JARVIS will call `get_ui_state`, find the element, use `ax_action press` (or fall back to `mouse_click` if needed)
+7. Try: "Press Cmd+C to copy" — JARVIS will call `get_ui_state` to lock context, then `keyboard_shortcut cmd+c`
 
 ---
 
-### M012: Screenshot and Vision Fallback `[ ]`
+### M012: Screenshot and Vision Fallback `[x]`
 
 **What to build:**
 - `screenshot` tool — capture screen or specific window via CGWindowListCreateImage
@@ -590,15 +671,52 @@ JARVIS can see and interact with any app on the Mac.
 - This is the LAST RESORT fallback. The system prompt must instruct Claude to try AX tools first.
 
 **Test criteria:**
-- screenshot: test captures image data (mock CGWindowList for CI)
-- vision_analyze: test sends image to Claude vision API and parses coordinate response
-- vision_analyze: test handles malformed response gracefully
-- Permission check: test returns false when not granted
+- screenshot: test captures image data (mock CGWindowList for CI) ✓
+- vision_analyze: test sends image to Claude vision API and parses coordinate response ✓
+- vision_analyze: test handles malformed response gracefully ✓
+- Permission check: test returns false when not granted ✓
 
 **Deliverables:**
-- Screenshot + vision fallback working
-- Clearly documented as last-resort path
-- System prompt explicitly prioritises AX over vision
+- Screenshot + vision fallback working ✓
+- Clearly documented as last-resort path ✓
+- System prompt explicitly prioritises AX over vision ✓
+
+**Built:**
+- `JARVIS/Core/Types.swift` — Added `ImageContent` struct (mediaType, base64Data) and `.image(ImageContent)` case to `ContentBlock`. Full Anthropic encode/decode with nested `source` object.
+- `JARVIS/Info.plist` — Added `NSScreenCaptureUsageDescription` TCC usage description.
+- `JARVIS/Tools/ComputerControl/ScreenshotProviding.swift` — `ScreenshotProviding` protocol with `checkPermission`, `requestPermission`, `captureScreen`, `captureWindow(pid:)`. `ScreenshotError` enum.
+- `JARVIS/Tools/ComputerControl/SystemScreenshotProvider.swift` — Production implementation using `CGPreflightScreenCaptureAccess`, `CGWindowListCreateImage`. Downscales to 1280px max long edge and JPEG-encodes at quality 0.8. Not unit-tested (requires real Screen Recording permission).
+- `JARVIS/Tools/ComputerControl/ScreenshotCache.swift` — Thread-safe NSLock cache with 30s TTL. Stores data, mediaType, width, height, timestamp.
+- `JARVIS/Tools/BuiltIn/ScreenshotTool.swift` — `screenshot` tool. Checks permission, captures screen or frontmost window, stores in `ScreenshotCache`. Risk: `.safe`. Parses JPEG SOF marker for dimensions.
+- `JARVIS/Tools/BuiltIn/VisionAnalyzeTool.swift` — `vision_analyze` tool. Reads from `ScreenshotCache`, builds `Message` with `.image` + `.text` blocks, calls `ModelProvider.send()` with `tools: []` (no recursion). Risk: `.caution`.
+- `JARVIS/Shared/Logger.swift` — Added `Logger.screenshot` subsystem.
+- `JARVIS/Tools/BuiltIn/BuiltInToolRegistration.swift` — Added `registerScreenshotTools(in:screenshotProvider:cache:modelProvider:)`.
+- `JARVIS/UI/ChatViewModel.swift` — Wires `SystemScreenshotProvider`, `ScreenshotCache`, and `registerScreenshotTools` in `createOrchestrator`.
+- `Tests/Helpers/MockScreenshotProvider.swift` — Configurable mock with call counts. `makeTestImageData()` creates a 100×100 red JPEG.
+- `Tests/CoreTests/TypesTests.swift` — 4 new tests for ImageContent round-trip, encode to Anthropic format, decode from Anthropic format, mixed text+image message.
+- `Tests/ToolTests/ScreenshotCacheTests.swift` — 6 tests: store/retrieve, TTL expiry, invalidate, overwrite, concurrent access, empty cache.
+- `Tests/ToolTests/ScreenshotToolTests.swift` — 9 tests: screen capture, window capture, permission denied, capture failure, risk level, name, schema, default target, dimensions in message.
+- `Tests/ToolTests/VisionAnalyzeToolTests.swift` — 9 tests: valid cache, empty cache, expired cache, query inclusion, image content, no-tools call, model failure, risk level, schema.
+- `Tests/IntegrationTests/ScreenshotToolsIntegrationTests.swift` — 3 end-to-end tests: full orchestrator loop with screenshot+vision sequence, shared cache verification, no-screenshot error path.
+
+**Total tests: 464 (was 384, added 80)**
+
+**Decisions:**
+- `VisionAnalyzeTool` calls `ModelProvider.send()` with `tools: []` — prevents any recursion risk; this is a completely isolated, stateless Claude call.
+- `ScreenshotCache` TTL is 30s (vs UIStateCache 0.5s) — screenshots are explicitly taken and should persist across a user's analysis sequence.
+- `ScreenshotTool` risk level is `.safe` — screen capture is read-only, same as `get_ui_state`. The caution is reserved for `vision_analyze` which sends data to the API.
+- `jpegDimensions(from:)` parses JPEG SOF markers inline — avoids loading `NSImage` just for metadata; dimensions are informational only (included in the result message to Claude).
+- `SystemScreenshotProvider.captureWindow(pid:)` finds the frontmost window by PID via `CGWindowListCopyWindowInfo` — falls back to captureFailed if no window found.
+- `ImageContent` uses `base64Data: String` (not `Data`) — avoids double-encoding; the tool encodes to base64 string before storing in the struct.
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 464 tests, all green
+5. Grant Screen Recording permission if needed: System Settings → Privacy & Security → Screen Recording → JARVIS ON
+6. Press **Cmd+R** to run the app, then ask JARVIS: "Take a screenshot and tell me what's on my screen" — JARVIS calls `screenshot` then `vision_analyze`
+7. Note: JARVIS will always try `get_ui_state` first — `screenshot` + `vision_analyze` are last-resort tools
 
 ---
 

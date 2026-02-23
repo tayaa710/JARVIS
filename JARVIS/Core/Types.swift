@@ -43,12 +43,20 @@ struct ToolDefinition: Sendable, Codable {
     }
 }
 
+// MARK: - ImageContent
+
+struct ImageContent: Sendable, Codable, Equatable {
+    let mediaType: String
+    let base64Data: String
+}
+
 // MARK: - ContentBlock
 
 enum ContentBlock: Sendable, Codable {
     case text(String)
     case toolUse(ToolUse)
     case toolResult(ToolResult)
+    case image(ImageContent)
 
     private enum CodingKeys: String, CodingKey {
         case type
@@ -59,6 +67,13 @@ enum ContentBlock: Sendable, Codable {
         case toolUseId = "tool_use_id"
         case content
         case isError = "is_error"
+        case source
+    }
+
+    private enum SourceCodingKeys: String, CodingKey {
+        case type
+        case mediaType = "media_type"
+        case data
     }
 
     init(from decoder: Decoder) throws {
@@ -78,6 +93,14 @@ enum ContentBlock: Sendable, Codable {
             let content = try container.decode(String.self, forKey: .content)
             let isError = try container.decodeIfPresent(Bool.self, forKey: .isError) ?? false
             self = .toolResult(ToolResult(toolUseId: toolUseId, content: content, isError: isError))
+        case "image":
+            let sourceContainer = try container.nestedContainer(
+                keyedBy: SourceCodingKeys.self,
+                forKey: .source
+            )
+            let mediaType = try sourceContainer.decode(String.self, forKey: .mediaType)
+            let data = try sourceContainer.decode(String.self, forKey: .data)
+            self = .image(ImageContent(mediaType: mediaType, base64Data: data))
         default:
             throw DecodingError.dataCorruptedError(
                 forKey: .type,
@@ -103,6 +126,15 @@ enum ContentBlock: Sendable, Codable {
             try container.encode(result.toolUseId, forKey: .toolUseId)
             try container.encode(result.content, forKey: .content)
             try container.encode(result.isError, forKey: .isError)
+        case .image(let image):
+            try container.encode("image", forKey: .type)
+            var sourceContainer = container.nestedContainer(
+                keyedBy: SourceCodingKeys.self,
+                forKey: .source
+            )
+            try sourceContainer.encode("base64", forKey: .type)
+            try sourceContainer.encode(image.mediaType, forKey: .mediaType)
+            try sourceContainer.encode(image.base64Data, forKey: .data)
         }
     }
 }

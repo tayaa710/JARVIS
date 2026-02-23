@@ -203,6 +203,65 @@ struct TypesTests {
         #expect(usage.outputTokens == 5)
     }
 
+    // MARK: - ImageContent encode/decode
+
+    @Test func testImageContentRoundTrip() throws {
+        let image = ImageContent(mediaType: "image/jpeg", base64Data: "abc123")
+        #expect(image.mediaType == "image/jpeg")
+        #expect(image.base64Data == "abc123")
+    }
+
+    @Test func testContentBlockImageEncodesToAnthropicFormat() throws {
+        let image = ImageContent(mediaType: "image/jpeg", base64Data: "iVBOR")
+        let block = ContentBlock.image(image)
+        let data = try encoder.encode(block)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+
+        #expect(json["type"] as? String == "image")
+        let source = json["source"] as? [String: Any]
+        #expect(source != nil)
+        #expect(source?["type"] as? String == "base64")
+        #expect(source?["media_type"] as? String == "image/jpeg")
+        #expect(source?["data"] as? String == "iVBOR")
+    }
+
+    @Test func testContentBlockImageDecodesFromAnthropicFormat() throws {
+        let json = """
+        {
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": "image/jpeg",
+                "data": "iVBOR=="
+            }
+        }
+        """.data(using: .utf8)!
+
+        let block = try decoder.decode(ContentBlock.self, from: json)
+        guard case .image(let image) = block else {
+            Issue.record("Expected .image case"); return
+        }
+        #expect(image.mediaType == "image/jpeg")
+        #expect(image.base64Data == "iVBOR==")
+    }
+
+    @Test func testMessageWithMixedTextAndImageEncodesToArray() throws {
+        let image = ImageContent(mediaType: "image/png", base64Data: "AAAA")
+        let message = Message(role: .user, content: [
+            .image(image),
+            .text("What is in this image?")
+        ])
+        let data = try encoder.encode(message)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+
+        #expect(json["role"] as? String == "user")
+        // Must be an array (not string shorthand) because it has multiple blocks.
+        let blocks = json["content"] as? [[String: Any]]
+        #expect(blocks?.count == 2)
+        #expect(blocks?[0]["type"] as? String == "image")
+        #expect(blocks?[1]["type"] as? String == "text")
+    }
+
     // MARK: - JSONValue round-trip
 
     @Test func testJSONValueRoundTripForNestedStructures() throws {

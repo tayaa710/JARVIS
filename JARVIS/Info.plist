@@ -16,5 +16,7 @@
     <string>JARVIS uses Accessibility to read and control the UI of other apps on your Mac.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>JARVIS uses the microphone to listen for your voice commands.</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>JARVIS uses Screen Recording to capture screenshots when it cannot read the UI through Accessibility APIs.</string>
 </dict>
 </plist>

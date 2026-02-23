@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import AppKit
 
 // MARK: - ChatViewModel
 
@@ -138,10 +139,11 @@ final class ChatViewModel {
     private func createOrchestrator(apiKey: String) {
         let registry = ToolRegistryImpl()
         try? registerBuiltInTools(in: registry)
+
         let policyEngine = PolicyEngineImpl()
         let apiClient = APIClient()
         let modelProvider = AnthropicProvider(apiClient: apiClient, apiKey: apiKey)
-        orchestrator = OrchestratorImpl(
+        let orch = OrchestratorImpl(
             modelProvider: modelProvider,
             toolRegistry: registry,
             policyEngine: policyEngine,
@@ -151,6 +153,42 @@ final class ChatViewModel {
                 return await self.requestConfirmation(for: toolUse)
             }
         )
+
+        // Register AX tools and wire the context lock setter
+        let axService = AccessibilityServiceImpl()
+        let uiStateCache = UIStateCache()
+        let getUIStateTool = try? registerAXTools(
+            in: registry,
+            accessibilityService: axService,
+            cache: uiStateCache
+        )
+        getUIStateTool?.contextLockSetter = { [weak orch] lock in
+            orch?.setContextLock(lock)
+        }
+
+        // Register input tools and wire context lock checker
+        let inputService = CGEventInputService()
+        let lockChecker = ContextLockChecker(
+            lockProvider: { [weak orch] in orch?.contextLock },
+            appProvider: {
+                guard let app = NSWorkspace.shared.frontmostApplication,
+                      let bundleId = app.bundleIdentifier else { return nil }
+                return (bundleId: bundleId, pid: app.processIdentifier)
+            }
+        )
+        try? registerInputTools(in: registry, inputService: inputService,
+                                contextLockChecker: lockChecker, cache: uiStateCache)
+
+        // Register screenshot and vision tools
+        let screenshotCache = ScreenshotCache()
+        try? registerScreenshotTools(
+            in: registry,
+            screenshotProvider: SystemScreenshotProvider(),
+            cache: screenshotCache,
+            modelProvider: modelProvider
+        )
+
+        orchestrator = orch
     }
 
     private func handleEvent(_ event: OrchestratorEvent) {
