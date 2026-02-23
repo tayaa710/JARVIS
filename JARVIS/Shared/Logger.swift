@@ -85,6 +85,7 @@ public enum Logger {
     public static let voice        = JARVISLogger(subsystem: "com.aidaemon", category: "voice")
     public static let memory       = JARVISLogger(subsystem: "com.aidaemon", category: "memory")
     public static let ui           = JARVISLogger(subsystem: "com.aidaemon", category: "ui")
-    public static let keychain     = JARVISLogger(subsystem: "com.aidaemon", category: "keychain")
-    public static let app          = JARVISLogger(subsystem: "com.aidaemon", category: "app")
+    public static let keychain       = JARVISLogger(subsystem: "com.aidaemon", category: "keychain")
+    public static let app            = JARVISLogger(subsystem: "com.aidaemon", category: "app")
+    public static let accessibility  = JARVISLogger(subsystem: "com.aidaemon", category: "accessibility")
 }
