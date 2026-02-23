@@ -220,7 +220,7 @@ enum StreamEvent: Sendable {
 
 // MARK: - RiskLevel
 
-enum RiskLevel: Sendable {
+enum RiskLevel: Sendable, Equatable {
     case safe
     case caution
     case dangerous
@@ -229,8 +229,16 @@ enum RiskLevel: Sendable {
 
 // MARK: - PolicyDecision
 
-enum PolicyDecision: Sendable {
+enum PolicyDecision: Sendable, Equatable {
     case allow
     case requireConfirmation
     case deny
+}
+
+// MARK: - AutonomyLevel
+
+enum AutonomyLevel: Int, Sendable, Equatable {
+    case askAll = 0       // Level 0 — confirm everything except safe
+    case smartDefault = 1 // Level 1 — allow safe+caution, confirm dangerous+destructive
+    case fullAuto = 2     // Level 2 — allow safe+caution+dangerous, confirm destructive
 }

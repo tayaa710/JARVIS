@@ -224,7 +224,7 @@ The brain comes alive. JARVIS can think and use tools, but only simple ones.
 
 ---
 
-### M005: Policy Engine `[ ]`
+### M005: Policy Engine `[x]`
 
 **What to build:**
 - `PolicyEngine` — evaluates tool calls against safety rules
@@ -235,16 +235,50 @@ The brain comes alive. JARVIS can think and use tools, but only simple ones.
 - Destructive actions ALWAYS require confirmation regardless of autonomy level
 
 **Test criteria:**
-- Test every cell in the decision matrix (3 autonomy levels x 4 risk levels = 12 test cases)
-- Test path traversal blocking: `../`, `/../`, `..\\`, case-insensitive
-- Test system path blocking: `/System`, `/Library`, `/usr`, `/bin`, `/sbin`, `/private`
-- Test control character stripping
-- Test length limit enforcement
-- Test destructive always confirms even at Level 2
+- Test every cell in the decision matrix (3 autonomy levels x 4 risk levels = 12 test cases) ✓
+- Test path traversal blocking: `../`, `/../`, `..\\`, case-insensitive ✓
+- Test system path blocking: `/System`, `/Library`, `/usr`, `/bin`, `/sbin`, `/private` ✓
+- Test control character stripping ✓
+- Test length limit enforcement ✓
+- Test destructive always confirms even at Level 2 ✓
 
 **Deliverables:**
-- PolicyEngine with full test coverage
-- Clear documentation of the decision matrix
+- PolicyEngine with full test coverage ✓
+- Clear documentation of the decision matrix ✓
+
+**Built:**
+- `JARVIS/Core/Types.swift` — Added `AutonomyLevel` enum (Int raw values 0–2, Sendable+Equatable). Also added `Equatable` to `RiskLevel` and `PolicyDecision` (needed for decision matrix comparisons and test assertions).
+- `JARVIS/Core/InputSanitizer.swift` — Stateless `InputSanitizer` enum with `check(call:) -> [SanitizationViolation]`. Checks: path traversal (`../`, `..\`), system paths (`/system/`, `/library/`, `/usr/`, `/bin/`, `/sbin/`, `/private/`, case-insensitive), control characters (ASCII 0–31 except `\t`, `\n`, `\r`), and length > 10,000 chars. Walks nested objects and arrays recursively.
+- `JARVIS/Core/PolicyEngineImpl.swift` — `final class PolicyEngineImpl: PolicyEngine, @unchecked Sendable`. NSLock-protected `autonomyLevel`. `init(autonomyLevel: .smartDefault)`. `setAutonomyLevel(_:)` for runtime changes. `evaluate()` runs sanitization first (returns `.deny` on any violation), then applies the decision matrix. Logs via `Logger.policy`.
+- `Tests/CoreTests/InputSanitizerTests.swift` — 17 tests covering all sanitization rules
+- `Tests/CoreTests/PolicyEngineTests.swift` — 18 tests: 12 decision matrix cells, 5 sanitization integration, 1 autonomy level change
+
+**Total tests: 137 (was 102, added 35)**
+
+**Decision matrix:**
+
+| Risk \ Autonomy | Level 0 (askAll) | Level 1 (smartDefault) | Level 2 (fullAuto) |
+|---|---|---|---|
+| safe | allow | allow | allow |
+| caution | requireConfirmation | allow | allow |
+| dangerous | requireConfirmation | requireConfirmation | allow |
+| destructive | requireConfirmation | requireConfirmation | requireConfirmation |
+
+**Key rule:** `destructive` ALWAYS requires confirmation, even at Level 2.
+
+**Decisions:**
+- `SanitizationViolation` is a plain enum (no `Equatable`) — tests use pattern matching via `contains { if case .foo = $0 { return true }; return false }`.
+- System path check uses a trailing-slash prefix list (e.g. `/system/`) so `/binary` is not blocked but `/bin/sh` is.
+- `~/Library/...` is NOT blocked — only absolute `/Library/...` paths are blocked.
+- `..` alone does NOT trigger path traversal — only `../` and `..\` do.
+- `InputSanitizer` is separate from `PolicyEngineImpl` (independently testable, stateless).
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 137 tests, all green
+5. No new UI — these are infrastructure components
 
 ---
 
