@@ -24,6 +24,12 @@ struct ChatInputView: View {
                 .focused($isFocused)
                 .onKeyPress(.return, phases: .down) { keyPress in
                     if keyPress.modifiers.contains(.command) {
+                        // Cmd+Enter = new line (insert \n)
+                        inputText += "\n"
+                        return .handled
+                    }
+                    // Enter alone = send
+                    if canSend {
                         onSend()
                         return .handled
                     }
@@ -37,7 +43,7 @@ struct ChatInputView: View {
             }
             .buttonStyle(.plain)
             .disabled(!canSend)
-            .keyboardShortcut(.return, modifiers: .command)
+            .keyboardShortcut(.return, modifiers: [])
             .padding(.bottom, 8)
         }
         .padding(.horizontal, 12)
