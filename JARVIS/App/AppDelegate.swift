@@ -11,6 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var viewModel: ChatViewModel?
     private var wakeWordDetector: WakeWordDetectorImpl?
+    private var wakeWordEnabledObserver: NSObjectProtocol?
+    private var lastKnownWakeWordEnabled: Bool = false
 
     // MARK: - Application Lifecycle
 
@@ -63,8 +65,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Start wake word detection if enabled and access key is available.
+        lastKnownWakeWordEnabled = UserDefaults.standard.bool(forKey: "wakeWordEnabled")
         Task {
             await startWakeWordDetectionIfEnabled()
+        }
+
+        // Observe UserDefaults changes so the toggle works at runtime.
+        wakeWordEnabledObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            let enabled = UserDefaults.standard.bool(forKey: "wakeWordEnabled")
+            guard enabled != self.lastKnownWakeWordEnabled else { return }
+            self.lastKnownWakeWordEnabled = enabled
+            Task { @MainActor in
+                if enabled {
+                    Logger.app.info("Wake word toggled ON — starting detection")
+                    await self.startWakeWordDetectionIfEnabled()
+                } else {
+                    Logger.app.info("Wake word toggled OFF — stopping detection")
+                    await self.stopWakeWordDetection()
+                }
+            }
         }
     }
 
@@ -92,9 +116,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 permissionChecker: permChecker
             )
             detector.onWakeWordDetected = { [weak self] in
-                Logger.app.info("Wake word detected — bringing panel to front")
+                Logger.app.info("🎤 Wake word detected — activating JARVIS")
+                NSSound(named: "Tink")?.play()
                 self?.panel?.makeKeyAndOrderFront(nil)
-                // Placeholder: M018 will trigger STT here
+                NSApp.activate(ignoringOtherApps: true)
+                // Placeholder: future milestone will trigger STT here
             }
             detector.onError = { error in
                 Logger.app.error("Wake word detection error: \(error)")
@@ -105,6 +131,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             Logger.app.error("Failed to start wake word detection: \(error)")
         }
+    }
+
+    private func stopWakeWordDetection() async {
+        await wakeWordDetector?.stop()
+        wakeWordDetector = nil
+        Logger.app.info("Wake word detection stopped")
     }
 
     // MARK: - Permissions

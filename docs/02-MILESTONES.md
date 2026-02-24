@@ -949,6 +949,13 @@ JARVIS can hear you and talk back.
 - AVAudioEngineInput converts hardware audio (typically 48kHz Float32) → 16kHz Int16 mono via `AVAudioConverter`.
 - 566 tests pass total.
 
+**Post-M018 fixes (wake word reliability):**
+- **Runtime toggle**: AppDelegate now observes `UserDefaults.didChangeNotification` for `"wakeWordEnabled"` — flipping the toggle in Settings starts/stops detection immediately without relaunch.
+- **Audio buffer fix**: `AVAudioEngineInput.handleBuffer` output buffer capacity was fixed at ~513 frames; if the audio tap delivered a larger-than-requested buffer (common), converted samples were silently dropped, corrupting the audio stream. Fixed to size proportionally to actual input buffer.
+- **Detection feedback**: Wake word detection now plays `NSSound("Tink")` and calls `NSApp.activate(ignoringOtherApps:)` so the user gets audio+visual confirmation.
+- **Sensitivity**: PorcupineEngine sensitivity increased from 0.5 → 0.7 for better detection in typical room conditions.
+- **Diagnostics**: AVAudioEngineInput logs frame dispatch count every ~5 seconds so audio pipeline health is visible in Console.
+
 ---
 
 ### M018: Settings Window `[x]`

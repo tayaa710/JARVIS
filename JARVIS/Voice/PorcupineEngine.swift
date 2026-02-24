@@ -29,14 +29,17 @@ public final class PorcupineEngine: WakeWordEngine {
             throw PorcupineEngineError.resourceNotFound("jarvis_mac.ppn not found in app bundle")
         }
 
-        let sensitivity: Float = 0.5
+        let sensitivity: Float = 0.7
+        let device = "best"
         let status = withUnsafePointer(to: sensitivity) { sensitivityPtr in
             keywordPath.withCString { kwPath in
                 modelPath.withCString { mdlPath in
                     accessKey.withCString { akStr in
-                        let kwPaths: [UnsafePointer<CChar>?] = [kwPath]
-                        return kwPaths.withUnsafeBufferPointer { kwBuf in
-                            pv_porcupine_init(akStr, mdlPath, 1, kwBuf.baseAddress, sensitivityPtr, &handle)
+                        device.withCString { devStr in
+                            let kwPaths: [UnsafePointer<CChar>?] = [kwPath]
+                            return kwPaths.withUnsafeBufferPointer { kwBuf in
+                                pv_porcupine_init(akStr, mdlPath, devStr, 1, kwBuf.baseAddress, sensitivityPtr, &handle)
+                            }
                         }
                     }
                 }

@@ -15,6 +15,8 @@ public final class AVAudioEngineInput: AudioInputProviding {
     private var sampleBuffer: [Int16] = []
     private var targetFrameSize: Int = 512
     private var onFrame: (@Sendable ([Int16]) -> Void)?
+    private var framesDispatched: Int = 0
+    private var lastDiagnosticLog: Date = .distantPast
 
     public private(set) var isCapturing: Bool = false
 
@@ -88,9 +90,12 @@ public final class AVAudioEngineInput: AudioInputProviding {
         converter: AVAudioConverter,
         targetFormat: AVAudioFormat
     ) {
+        // Size the output buffer proportionally to the input to avoid dropping samples.
+        let sampleRateRatio = targetFormat.sampleRate / buffer.format.sampleRate
+        let outputCapacity = AVAudioFrameCount(Double(buffer.frameLength) * sampleRateRatio) + 16
         guard let convertedBuffer = AVAudioPCMBuffer(
             pcmFormat: targetFormat,
-            frameCapacity: AVAudioFrameCount(targetFormat.sampleRate * 0.032) + 1
+            frameCapacity: outputCapacity
         ) else { return }
 
         var error: NSError?
@@ -113,6 +118,7 @@ public final class AVAudioEngineInput: AudioInputProviding {
 
         guard let channelData = convertedBuffer.int16ChannelData else { return }
         let frameCount = Int(convertedBuffer.frameLength)
+        guard frameCount > 0 else { return }
         let samples = Array(UnsafeBufferPointer(start: channelData[0], count: frameCount))
 
         sampleBuffer.append(contentsOf: samples)
@@ -121,6 +127,14 @@ public final class AVAudioEngineInput: AudioInputProviding {
             let frame = Array(sampleBuffer.prefix(targetFrameSize))
             sampleBuffer.removeFirst(targetFrameSize)
             onFrame?(frame)
+            framesDispatched += 1
+        }
+
+        // Log diagnostics every ~5 seconds so we can confirm audio is flowing.
+        let now = Date()
+        if now.timeIntervalSince(lastDiagnosticLog) >= 5.0 {
+            Logger.wakeWord.info("Audio pipeline: \(framesDispatched) frames dispatched to engine (buffer: \(sampleBuffer.count) samples pending)")
+            lastDiagnosticLog = now
         }
     }
 }

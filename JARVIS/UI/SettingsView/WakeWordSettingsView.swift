@@ -17,6 +17,10 @@ struct WakeWordSettingsView: View {
                         updateStatus()
                     }
 
+                Text("When enabled, macOS will show a microphone indicator in the menu bar while listening.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 LabeledContent("Wake Phrase") {
                     Text("Hey JARVIS")
                         .foregroundStyle(.secondary)
