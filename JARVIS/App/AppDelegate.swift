@@ -2,12 +2,14 @@ import AppKit
 import SwiftUI
 import ApplicationServices
 import CoreGraphics
+import AVFoundation
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var panel: NSPanel?
     private var statusItem: NSStatusItem?
     private var viewModel: ChatViewModel?
+    private var wakeWordDetector: WakeWordDetectorImpl?
 
     // MARK: - Application Lifecycle
 
@@ -53,6 +55,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.requestPermissions()
         }
+
+        // Start wake word detection if enabled and access key is available.
+        Task {
+            await startWakeWordDetectionIfEnabled()
+        }
+    }
+
+    // MARK: - Wake Word
+
+    private func startWakeWordDetectionIfEnabled() async {
+        guard UserDefaults.standard.bool(forKey: "wakeWordEnabled") else {
+            Logger.app.info("Wake word detection disabled — skipping")
+            return
+        }
+        let keychain = KeychainHelper()
+        guard let keyData = try? keychain.read(key: "picovoice_access_key"),
+              let accessKey = String(data: keyData, encoding: .utf8),
+              !accessKey.isEmpty else {
+            Logger.app.warning("Wake word enabled but Picovoice access key not set — skipping")
+            return
+        }
+        do {
+            let engine = try PorcupineEngine(accessKey: accessKey)
+            let audioInput = AVAudioEngineInput()
+            let permChecker = SystemMicrophonePermission()
+            let detector = WakeWordDetectorImpl(
+                engine: engine,
+                audioInput: audioInput,
+                permissionChecker: permChecker
+            )
+            detector.onWakeWordDetected = { [weak self] in
+                Logger.app.info("Wake word detected — bringing panel to front")
+                self?.panel?.makeKeyAndOrderFront(nil)
+                // Placeholder: M018 will trigger STT here
+            }
+            detector.onError = { error in
+                Logger.app.error("Wake word detection error: \(error)")
+            }
+            try await detector.start()
+            self.wakeWordDetector = detector
+            Logger.app.info("Wake word detection active")
+        } catch {
+            Logger.app.error("Failed to start wake word detection: \(error)")
+        }
     }
 
     // MARK: - Permissions
@@ -72,6 +118,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !CGPreflightScreenCaptureAccess() {
             CGRequestScreenCaptureAccess()
             Logger.app.info("Requested Screen Recording permission")
+        }
+
+        // Microphone — required for wake word detection.
+        if AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined {
+            Task {
+                _ = await AVCaptureDevice.requestAccess(for: .audio)
+                Logger.app.info("Requested Microphone permission")
+            }
         }
     }
 

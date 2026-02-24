@@ -34,6 +34,9 @@ targets:
     dependencies:
       - package: Sparkle
       - package: KeyboardShortcuts
+      - framework: JARVIS/Vendor/Porcupine/PvPorcupine.framework
+        embed: true
+        codeSign: true
 
   JARVISTests:
     type: bundle.unit-test
@@ -46,3 +49,6 @@ targets:
         GENERATE_INFOPLIST_FILE: true
     dependencies:
       - target: JARVIS
+      - framework: JARVIS/Vendor/Porcupine/PvPorcupine.framework
+        embed: false
+        codeSign: false

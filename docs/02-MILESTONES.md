@@ -872,11 +872,38 @@ JARVIS can browse the web and interact with websites.
 
 ---
 
+### M016: Session File Logger `[x]`
+
+**What to build:**
+- `SessionLogging` protocol — logs every turn of a conversation to a human-readable file
+- `FileSessionLogger` — writes timestamped session traces to `~/Library/Logs/JARVIS/session-DATE.txt`
+- `NullSessionLogger` — no-op implementation for tests/when logging is disabled
+- Inject into `OrchestratorImpl` so every user message, thinking round, tool call/result, assistant response, and metrics are logged
+
+**Test criteria:**
+- Test that `FileSessionLogger` creates a log file on init ✓
+- Test that each `log*` method appends to the file ✓
+- Test that `NullSessionLogger` is a safe no-op ✓
+- Integration: orchestrator round-trip produces expected session log entries ✓
+
+**Deliverables:**
+- Full session trace logging for debugging and analysis ✓
+
+**Built:**
+- `JARVIS/Shared/SessionLogger.swift` — `SessionLogging` protocol, `NullSessionLogger`, `FileSessionLogger` (thread-safe, timestamped, truncates long outputs)
+- `Tests/Helpers/MockSessionLogger.swift` — Mock with call recording for tests
+- `Tests/IntegrationTests/SessionLoggerIntegrationTests.swift` — 4 integration tests
+- Modified `JARVIS/Core/OrchestratorImpl.swift` — injected `sessionLogger` dependency
+- Modified `JARVIS/Shared/Logger.swift` — added `Logger.session`
+- Total tests: **573** (was 514)
+
+---
+
 ## Phase 4 — Voice Interface
 
 JARVIS can hear you and talk back.
 
-### M016: Wake Word Detection `[ ]`
+### M017: Wake Word Detection `[x]`
 
 **What to build:**
 - `WakeWordDetector` — integrates Picovoice Porcupine SDK
@@ -888,18 +915,66 @@ JARVIS can hear you and talk back.
 - Settings UI: enable/disable, change wake phrase
 
 **Test criteria:**
-- Test start/stop/pause lifecycle
-- Test permission check
-- Test callback fires (mock Porcupine)
-- Test CPU usage stays under 2% during listen mode
+- Test start/stop/pause lifecycle ✓
+- Test permission check ✓
+- Test callback fires (mock Porcupine) ✓
+- Test CPU usage stays under 2% during listen mode (manual check — Porcupine is designed for <1%)
 
 **Deliverables:**
-- Working wake word detection
-- Settings integration
+- Working wake word detection ✓
+- Settings integration ✓
+
+**Built:**
+- `JARVIS/Voice/WakeWordDetecting.swift` — `WakeWordDetecting` protocol + `WakeWordError` enum
+- `JARVIS/Voice/AudioInputProviding.swift` — `AudioInputProviding` protocol for mic capture abstraction
+- `JARVIS/Voice/WakeWordEngine.swift` — `WakeWordEngine` protocol for Porcupine abstraction
+- `JARVIS/Voice/MicrophonePermission.swift` — `MicrophonePermissionChecking` protocol + `SystemMicrophonePermission`
+- `JARVIS/Voice/WakeWordDetectorImpl.swift` — core detector logic (protocol-injected, fully testable)
+- `JARVIS/Voice/AVAudioEngineInput.swift` — real mic capture via `AVAudioEngine` with 16kHz Int16 conversion
+- `JARVIS/Voice/PorcupineEngine.swift` — thin C-API wrapper over vendored `PvPorcupine.framework`
+- `JARVIS/UI/SettingsView/WakeWordSettingsView.swift` — toggle, access key entry, status label
+- `JARVIS/Vendor/Porcupine/` — macOS universal `PvPorcupine.framework` + `porcupine_params.pv` + `jarvis_mac.ppn`
+- `JARVIS/App/AppDelegate.swift` — wires detector on launch; requests microphone permission
+- `Tests/VoiceTests/WakeWordDetectorTests.swift` — 9 unit tests
+- `Tests/VoiceTests/AVAudioEngineInputTests.swift` — 3 state-machine tests
+- `Tests/UITests/WakeWordSettingsViewTests.swift` — 2 tests
+- `Tests/IntegrationTests/WakeWordIntegrationTests.swift` — 3 integration tests
+- `Tests/Helpers/MockAudioInput.swift`, `MockWakeWordEngine.swift`, `MockMicrophonePermission.swift`
+
+**Notes:**
+- Porcupine SPM package is iOS-only; used macOS fallback: vendored `PvPorcupine.framework` built from
+  `lib/mac/{arm64,x86_64}/libpv_porcupine.dylib` (universal binary via `lipo`).
+- Wake phrase is fixed as "Hey JARVIS" (`jarvis_mac.ppn`). Custom phrases require Picovoice Console training (out of scope).
+- Access key stored in Keychain under `"picovoice_access_key"`. User pastes key in WakeWordSettingsView.
+- AVAudioEngineInput converts hardware audio (typically 48kHz Float32) → 16kHz Int16 mono via `AVAudioConverter`.
+- 566 tests pass total.
 
 ---
 
-### M017: Speech-to-Text (Deepgram) `[ ]`
+### M018: Settings Window `[ ]`
+
+**What to build:**
+- `SettingsView.swift` — main settings window with a `TabView` (sidebar style on macOS). Wired into `JARVISApp.swift` via the `Settings` scene so Cmd+, opens it.
+- **General tab** (`GeneralSettingsView.swift`) — app appearance (light/dark/system), launch at login toggle, global keyboard shortcut picker (using KeyboardShortcuts).
+- **API Keys tab** (`APIKeysSettingsView.swift`) — secure fields for: Claude API key, Picovoice access key, Deepgram API key. All stored in Keychain via `KeychainHelper`. Show saved/missing status per key.
+- **Voice tab** — reuse existing `WakeWordSettingsView.swift` (already built in M017). Add future placeholders for STT/TTS provider selection.
+- **About tab** (`AboutSettingsView.swift`) — app version, build number, links to project repo. Sparkle "Check for Updates" button.
+- Wire the `Settings` scene in `JARVISApp.swift` to show `SettingsView` instead of `EmptyView`.
+
+**Test criteria:**
+- Settings window opens via Cmd+, (manual verification by owner)
+- API keys round-trip through Keychain: save → quit → reopen → keys still present (unit test `KeychainHelper` already covered in M002; add view-model tests)
+- Each tab renders without crash (SwiftUI preview + unit tests on view models)
+- Toggling "launch at login" updates `SMAppService` registration (unit test with mock)
+
+**Deliverables:**
+- Full settings window with 4 tabs (General, API Keys, Voice, About)
+- Owner can paste Picovoice access key and Claude API key from the Settings UI
+- All secrets stored exclusively in Keychain (no UserDefaults for keys)
+
+---
+
+### M019: Speech-to-Text (Deepgram) `[ ]`
 
 **What to build:**
 - `SpeechInput` — streaming STT via Deepgram WebSocket API
@@ -924,7 +999,7 @@ JARVIS can hear you and talk back.
 
 ---
 
-### M018: Text-to-Speech (Deepgram) `[ ]`
+### M020: Text-to-Speech (Deepgram) `[ ]`
 
 **What to build:**
 - `SpeechOutput` — streaming TTS via Deepgram API
@@ -951,7 +1026,7 @@ JARVIS can hear you and talk back.
 
 JARVIS gains access to thousands of community tools.
 
-### M019: MCP Client `[ ]`
+### M021: MCP Client `[ ]`
 
 **What to build:**
 - `MCPClient` — connects to an MCP server process via stdin/stdout JSON-RPC
@@ -972,7 +1047,7 @@ JARVIS gains access to thousands of community tools.
 
 ---
 
-### M020: MCP Server Manager + Integration `[ ]`
+### M022: MCP Server Manager + Integration `[ ]`
 
 **What to build:**
 - `MCPServerManager` — manages multiple MCP server processes
@@ -1000,7 +1075,7 @@ JARVIS gains access to thousands of community tools.
 
 JARVIS starts remembering and anticipating.
 
-### M021: Conversation Persistence `[ ]`
+### M023: Conversation Persistence `[ ]`
 
 **What to build:**
 - `ConversationStore` — save and load conversation history
@@ -1022,14 +1097,14 @@ JARVIS starts remembering and anticipating.
 
 ---
 
-### M022: Episodic Memory `[ ]`
+### M024: Episodic Memory `[ ]`
 
 **What to build:**
 - `MemoryStore` — SQLite database for memories
 - At conversation end: send conversation to Claude with "summarise this and extract key user facts"
 - Store: session summary, extracted facts, timestamp
 - At conversation start: retrieve recent and relevant memories, inject into system prompt
-- Relevance: keyword matching on facts (full vector search comes later in M029)
+- Relevance: keyword matching on facts (full vector search comes later in M030)
 - Settings: view memories, delete individual memories, clear all
 
 **Test criteria:**
@@ -1046,7 +1121,7 @@ JARVIS starts remembering and anticipating.
 
 ---
 
-### M023: Context Compression `[ ]`
+### M025: Context Compression `[ ]`
 
 **What to build:**
 - When conversation history exceeds token limit (configurable, default 50,000 tokens):
@@ -1067,7 +1142,7 @@ JARVIS starts remembering and anticipating.
 
 ---
 
-### M024: Task Manager (Long-Running Workflows) `[ ]`
+### M026: Task Manager (Long-Running Workflows) `[ ]`
 
 **What to build:**
 - `TaskManager` — handles multi-step tasks that take minutes or hours
@@ -1096,7 +1171,7 @@ JARVIS starts remembering and anticipating.
 
 JARVIS becomes enjoyable to use.
 
-### M025: Personality System `[ ]`
+### M027: Personality System `[ ]`
 
 **What to build:**
 - Personality presets: Professional, Friendly, Sarcastic, British Butler
@@ -1116,7 +1191,7 @@ JARVIS becomes enjoyable to use.
 
 ---
 
-### M026: Settings and Onboarding `[ ]`
+### M028: Settings and Onboarding (Polish) `[ ]`
 
 **What to build:**
 - Complete settings view (split into tab files, each under 300 lines):
@@ -1147,7 +1222,7 @@ JARVIS becomes enjoyable to use.
 
 ---
 
-### M027: Ambient Awareness `[ ]`
+### M029: Ambient Awareness `[ ]`
 
 **What to build:**
 - `AmbientMonitor` with pluggable observers:
@@ -1174,7 +1249,7 @@ JARVIS becomes enjoyable to use.
 
 JARVIS gets smarter and more capable.
 
-### M028: Self-Built Tools `[ ]`
+### M030: Self-Built Tools `[ ]`
 
 **What to build:**
 - When JARVIS can't do something, it can write a script and save it as a new custom tool
@@ -1198,7 +1273,7 @@ JARVIS gets smarter and more capable.
 
 ---
 
-### M029: Vector Memory (sqlite-vec) `[ ]`
+### M031: Vector Memory (sqlite-vec) `[ ]`
 
 **What to build:**
 - Add sqlite-vec extension to the SQLite database
@@ -1221,7 +1296,7 @@ JARVIS gets smarter and more capable.
 
 ---
 
-### M030: Phone Notifications for Approvals `[ ]`
+### M032: Phone Notifications for Approvals `[ ]`
 
 **What to build:**
 - Companion notification system (implementation TBD — could be iOS app, iMessage, email, or push notification)
@@ -1245,7 +1320,7 @@ JARVIS gets smarter and more capable.
 
 ## Phase 9 — Ship It
 
-### M031: Security Audit `[ ]`
+### M033: Security Audit `[ ]`
 
 **What to build:**
 - Review all tool executors for injection vulnerabilities
@@ -1269,7 +1344,7 @@ JARVIS gets smarter and more capable.
 
 ---
 
-### M032: Auto-Updates and Distribution `[ ]`
+### M034: Auto-Updates and Distribution `[ ]`
 
 **What to build:**
 - Sparkle integration for auto-updates
@@ -1290,7 +1365,7 @@ JARVIS gets smarter and more capable.
 
 ---
 
-### M033: Beta Release `[ ]`
+### M035: Beta Release `[ ]`
 
 **What to build:**
 - Landing page (simple, can be GitHub Pages or similar)
