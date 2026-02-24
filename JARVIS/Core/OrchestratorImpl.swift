@@ -11,6 +11,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
     let maxRounds: Int
     let timeout: TimeInterval
     private let confirmationHandler: ConfirmationHandler?
+    private let sessionLogger: (any SessionLogging)?
 
     // MARK: - State (NSLock-protected)
 
@@ -29,7 +30,8 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
         systemPrompt: String? = nil,
         maxRounds: Int = 25,
         timeout: TimeInterval = 300,
-        confirmationHandler: ConfirmationHandler? = nil
+        confirmationHandler: ConfirmationHandler? = nil,
+        sessionLogger: (any SessionLogging)? = nil
     ) {
         self.modelProvider = modelProvider
         self.toolRegistry = toolRegistry
@@ -38,6 +40,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
         self.maxRounds = maxRounds
         self.timeout = timeout
         self.confirmationHandler = confirmationHandler
+        self.sessionLogger = sessionLogger
     }
 
     // MARK: - Orchestrator
@@ -75,6 +78,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
     func process(userMessage: String) async throws -> OrchestratorResult {
         lock.withLock { _abortRequested = false }
         lock.withLock { _conversationHistory.append(Message(role: .user, text: userMessage)) }
+        sessionLogger?.logUserMessage(userMessage)
 
         let startTime = Date()
 
@@ -121,6 +125,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
     ) async throws -> OrchestratorResult {
         lock.withLock { _abortRequested = false }
         lock.withLock { _conversationHistory.append(Message(role: .user, text: userMessage)) }
+        sessionLogger?.logUserMessage(userMessage)
 
         let startTime = Date()
 
@@ -176,6 +181,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
             let tools = toolRegistry.allDefinitions()
 
             Logger.orchestrator.info("Round \(roundCount + 1): \(history.count) messages, \(tools.count) tools")
+            sessionLogger?.logThinkingRound(roundCount + 1, messageCount: history.count, toolCount: tools.count)
 
             let response = try await modelProvider.send(
                 messages: history,
@@ -209,7 +215,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
                 Logger.orchestrator.info(
                     "Loop done: \(roundCount) round(s), \(toolsUsed.count) tool(s), \(errorsEncountered) error(s), \(String(format: "%.2f", elapsed))s"
                 )
-                return OrchestratorResult(
+                let result = OrchestratorResult(
                     text: text,
                     metrics: TurnMetrics(
                         roundCount: roundCount,
@@ -220,6 +226,9 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
                         outputTokens: outputTokens
                     )
                 )
+                if !text.isEmpty { sessionLogger?.logAssistantText(text) }
+                sessionLogger?.logMetrics(result.metrics)
+                return result
             }
 
             // Process each tool use block
@@ -233,10 +242,12 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
                 Logger.orchestrator.info(
                     "Tool '\(toolUse.name)' risk=\(String(describing: riskLevel)) decision=\(String(describing: decision))"
                 )
+                sessionLogger?.logToolCall(name: toolUse.name, inputJSON: inputJSON(toolUse.input), risk: riskLevel, decision: decision)
 
                 switch decision {
                 case .deny:
                     Logger.orchestrator.warning("Tool '\(toolUse.name)' denied by policy")
+                    sessionLogger?.logToolDenied(name: toolUse.name)
                     toolResultBlocks.append(.toolResult(ToolResult(
                         toolUseId: toolUse.id,
                         content: "Tool call denied by safety policy.",
@@ -254,10 +265,12 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
 
                     if approved {
                         let result = await executeToolSafely(toolUse, start: toolStart)
+                        sessionLogger?.logToolResult(name: toolUse.name, isError: result.isError, elapsed: Date().timeIntervalSince(toolStart), output: result.content)
                         toolResultBlocks.append(.toolResult(result))
                         if result.isError { errorsEncountered += 1 } else { toolsUsed.append(toolUse.name) }
                     } else {
                         Logger.orchestrator.info("Tool '\(toolUse.name)' rejected by user")
+                        sessionLogger?.logToolRejected(name: toolUse.name)
                         toolResultBlocks.append(.toolResult(ToolResult(
                             toolUseId: toolUse.id,
                             content: "Tool call rejected by user.",
@@ -268,6 +281,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
 
                 case .allow:
                     let result = await executeToolSafely(toolUse, start: toolStart)
+                    sessionLogger?.logToolResult(name: toolUse.name, isError: result.isError, elapsed: Date().timeIntervalSince(toolStart), output: result.content)
                     toolResultBlocks.append(.toolResult(result))
                     if result.isError { errorsEncountered += 1 } else { toolsUsed.append(toolUse.name) }
                 }
@@ -304,6 +318,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
             let tools = toolRegistry.allDefinitions()
 
             Logger.orchestrator.info("Streaming round \(roundCount + 1): \(history.count) messages, \(tools.count) tools")
+            sessionLogger?.logThinkingRound(roundCount + 1, messageCount: history.count, toolCount: tools.count)
 
             onEvent(.thinkingStarted)
 
@@ -390,6 +405,8 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
                         outputTokens: totalOutputTokens
                     )
                 )
+                if !textAccumulator.isEmpty { sessionLogger?.logAssistantText(textAccumulator) }
+                sessionLogger?.logMetrics(result.metrics)
                 onEvent(.completed(result))
                 return result
             }
@@ -405,12 +422,14 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
                 Logger.orchestrator.info(
                     "Tool '\(toolUse.name)' risk=\(String(describing: riskLevel)) decision=\(String(describing: decision))"
                 )
+                sessionLogger?.logToolCall(name: toolUse.name, inputJSON: inputJSON(toolUse.input), risk: riskLevel, decision: decision)
 
                 onEvent(.toolStarted(name: toolUse.name))
 
                 switch decision {
                 case .deny:
                     Logger.orchestrator.warning("Tool '\(toolUse.name)' denied by policy")
+                    sessionLogger?.logToolDenied(name: toolUse.name)
                     let denied = ToolResult(toolUseId: toolUse.id, content: "Tool call denied by safety policy.", isError: true)
                     onEvent(.toolCompleted(name: toolUse.name, result: denied.content, isError: true))
                     toolResultBlocks.append(.toolResult(denied))
@@ -425,11 +444,13 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
                     }
                     if approved {
                         let result = await executeToolSafely(toolUse, start: toolStart)
+                        sessionLogger?.logToolResult(name: toolUse.name, isError: result.isError, elapsed: Date().timeIntervalSince(toolStart), output: result.content)
                         onEvent(.toolCompleted(name: toolUse.name, result: result.content, isError: result.isError))
                         toolResultBlocks.append(.toolResult(result))
                         if result.isError { errorsEncountered += 1 } else { toolsUsed.append(toolUse.name) }
                     } else {
                         Logger.orchestrator.info("Tool '\(toolUse.name)' rejected by user")
+                        sessionLogger?.logToolRejected(name: toolUse.name)
                         let rejected = ToolResult(toolUseId: toolUse.id, content: "Tool call rejected by user.", isError: true)
                         onEvent(.toolCompleted(name: toolUse.name, result: rejected.content, isError: true))
                         toolResultBlocks.append(.toolResult(rejected))
@@ -438,6 +459,7 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
 
                 case .allow:
                     let result = await executeToolSafely(toolUse, start: toolStart)
+                    sessionLogger?.logToolResult(name: toolUse.name, isError: result.isError, elapsed: Date().timeIntervalSince(toolStart), output: result.content)
                     onEvent(.toolCompleted(name: toolUse.name, result: result.content, isError: result.isError))
                     toolResultBlocks.append(.toolResult(result))
                     if result.isError { errorsEncountered += 1 } else { toolsUsed.append(toolUse.name) }
@@ -476,5 +498,12 @@ final class OrchestratorImpl: Orchestrator, @unchecked Sendable {
                 isError: true
             )
         }
+    }
+
+    private func inputJSON(_ input: [String: JSONValue]) -> String {
+        guard !input.isEmpty,
+              let data = try? JSONEncoder().encode(input),
+              let str = String(data: data, encoding: .utf8) else { return "{}" }
+        return str
     }
 }

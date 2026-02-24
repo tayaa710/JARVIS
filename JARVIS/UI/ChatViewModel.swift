@@ -151,7 +151,8 @@ final class ChatViewModel {
             confirmationHandler: { [weak self] toolUse in
                 guard let self else { return false }
                 return await self.requestConfirmation(for: toolUse)
-            }
+            },
+            sessionLogger: FileSessionLogger()
         )
 
         // Register AX tools and wire the context lock setter
