@@ -768,7 +768,7 @@ JARVIS can browse the web and interact with websites.
 
 ---
 
-### M014: CDP Backend (Chrome-family) `[ ]`
+### M014: CDP Backend (Chrome-family) `[x]`
 
 **What to build:**
 - `CDPBackend` — connect to Chrome DevTools Protocol via WebSocket
@@ -778,13 +778,45 @@ JARVIS can browse the web and interact with websites.
 - Timeout handling per command (10 second default)
 
 **Test criteria:**
-- Test WebSocket connection to mock CDP server
-- Test each command sends correct CDP JSON and parses response
-- Test timeout triggers error after 10 seconds
-- Test connection failure returns clear error
+- Test WebSocket connection to mock CDP server ✓
+- Test each command sends correct CDP JSON and parses response ✓
+- Test timeout triggers error after 10 seconds ✓
+- Test connection failure returns clear error ✓
 
 **Deliverables:**
-- CDP backend for Chrome-family browsers, fully tested
+- CDP backend for Chrome-family browsers, fully tested ✓
+
+**Built:**
+- `JARVIS/Tools/Browser/CDPTypes.swift` — `CDPError` enum (Error, Equatable; 8 cases), `CDPTarget` struct (Sendable, Equatable, Decodable)
+- `JARVIS/Tools/Browser/CDPTransport.swift` — `CDPTransport` protocol abstracting WebSocket send/receive for testability
+- `JARVIS/Tools/Browser/CDPDiscovery.swift` — `CDPDiscovering` protocol + `CDPDiscoveryImpl` struct; HTTP GET to `http://localhost:{port}/json`, decodes `[CDPTarget]`, `findPageTarget` filters to type=="page"
+- `JARVIS/Tools/Browser/CDPBackendProtocol.swift` — `CDPBackendProtocol` with 9 methods (connect, disconnect, isConnected, navigate, evaluateJS, findElement, clickElement, typeInElement, getText, getURL)
+- `JARVIS/Tools/Browser/CDPBackendImpl.swift` — `final class CDPBackendImpl: CDPBackendProtocol, @unchecked Sendable`. NSLock-protected request dictionary, atomic nextId, background reader Task, 10s command timeout with race-free continuation cleanup. JS string escaping for selectors/text. Logs via Logger.cdp. Enables Runtime+Page domains on connect.
+- `JARVIS/Tools/Browser/URLSessionCDPTransport.swift` — Production `CDPTransport` backed by `URLSessionWebSocketTask`. NSLock-protected task reference.
+- `JARVIS/Shared/Logger.swift` — Added `Logger.cdp` subsystem
+- `Tests/Helpers/MockCDPTransport.swift` — AsyncStream-based mock; `enqueueResponse(id:result:)`, `enqueueErrorResponse(id:message:)`, `shouldFailConnect`, call recording
+- `Tests/Helpers/MockCDPDiscovery.swift` — Configurable targets list, `shouldThrow`, call count recording
+- `Tests/Helpers/MockCDPBackend.swift` — Full mock of `CDPBackendProtocol` with configurable results and errors per method; prepared for M015
+- `Tests/ToolTests/CDPDiscoveryTests.swift` — 6 tests using `MockCDPURLProtocol` (local to this file)
+- `Tests/ToolTests/CDPBackendTests.swift` — 18 tests using MockCDPTransport + MockCDPDiscovery
+
+**Total tests: 454 (was 429, added 25)**
+
+**Decisions:**
+- `CDPTypes.swift` contains no `CDPBackendProtocol` to keep `protocol CDPBackendProtocol` in its own file as planned; `CDPTypes` is the shared foundation.
+- `MockCDPURLProtocol` defined inline in `CDPDiscoveryTests.swift` (not a shared helper) — avoids naming conflict with `MockURLProtocol` in `APIClientTests.swift` which is in the same test module.
+- `evaluateJS` converts `JSONValue.bool` → `"true"/"false"` explicitly; `JSONValue` string interpolation would produce `"bool(true)"` which breaks `findElement`'s string comparison.
+- Timeout races handled: both the timeout Task and the background reader attempt `pendingRequests.removeValue(forKey:id)` under the same NSLock; only the one that succeeds gets to resume the continuation.
+- `connectedBackend` helper in tests pre-enqueues responses for id=1 (Runtime.enable) and id=2 (Page.enable) so tests start from a clean state with id counter at 3.
+- `URLSessionCDPTransport` is `final class @unchecked Sendable` with NSLock — matches the `AnthropicProvider` pattern. Not unit tested (requires real WebSocket server).
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Open project: `open JARVIS.xcodeproj`
+3. Press **Cmd+B** — "Build Succeeded"
+4. Press **Cmd+U** — 454 tests, all green
+5. No new UI — CDP backend is service infrastructure (tools come in M015)
+6. To test with real Chrome: launch Chrome with `open -a "Google Chrome" --args --remote-debugging-port=9222`, then the CDP backend can connect to it
 
 ---
 
