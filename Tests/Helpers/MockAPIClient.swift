@@ -10,6 +10,7 @@ final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
     private(set) var lastPostURL: String?
     private(set) var lastPostHeaders: [String: String]?
     private(set) var lastPostBody: Data?
+    private(set) var totalPostCallCount: Int = 0
 
     // Queued responses (dequeued FIFO).
     var postResponses: [(Data, HTTPURLResponse)] = []
@@ -31,6 +32,7 @@ final class MockAPIClient: APIClientProtocol, @unchecked Sendable {
         lastPostURL = url
         lastPostHeaders = headers
         lastPostBody = body
+        totalPostCallCount += 1
 
         if let error = postError {
             throw error

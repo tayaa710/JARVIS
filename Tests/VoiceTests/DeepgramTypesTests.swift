@@ -124,4 +124,23 @@ struct DeepgramTypesTests {
             Issue.record("Expected .unknown for malformed JSON, got \(msg)")
         }
     }
+
+    // MARK: - TTS Types
+
+    @Test("TTS voice list is non-empty")
+    func testTTSVoiceListNonEmpty() {
+        #expect(DeepgramTTSVoice.all.isEmpty == false)
+    }
+
+    @Test("Default TTS voice is aura-2-thalia-en")
+    func testDefaultTTSVoice() {
+        #expect(DeepgramTTSVoice.default.modelID == "aura-2-thalia-en")
+    }
+
+    @Test("DeepgramTTSConfig default values")
+    func testTTSConfigDefaults() {
+        let config = DeepgramTTSConfig()
+        #expect(config.sampleRate == 24000)
+        #expect(config.encoding == "linear16")
+    }
 }

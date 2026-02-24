@@ -80,6 +80,13 @@ final class ChatViewModel {
     private var orchestrator: (any Orchestrator)?
     private var currentTask: Task<Void, Never>?
     private var speechInput: (any SpeechInputProviding)?
+    private var speechOutput: (any SpeechOutputProviding)?
+
+    // TTS streaming state
+    private var sentenceBuffer: String = ""
+    private var pendingSentences: [String] = []
+    private var ttsIsRunning: Bool = false
+    private var responseIsComplete: Bool = false
 
     // MARK: - Init (production)
 
@@ -113,6 +120,21 @@ final class ChatViewModel {
         self.orchestrator = orchestrator
         self.needsAPIKey = false
         self.speechInput = speechInput
+    }
+
+    // MARK: - Init (for TTS tests — accepts pre-built orchestrator, speechInput, speechOutput)
+
+    init(
+        orchestrator: any Orchestrator,
+        keychainHelper: KeychainHelperProtocol,
+        speechInput: any SpeechInputProviding,
+        speechOutput: any SpeechOutputProviding
+    ) {
+        self.keychainHelper = keychainHelper
+        self.orchestrator = orchestrator
+        self.needsAPIKey = false
+        self.speechInput = speechInput
+        self.speechOutput = speechOutput
     }
 
     // MARK: - Public Methods
@@ -165,6 +187,12 @@ final class ChatViewModel {
         if !messages.isEmpty {
             messages[messages.count - 1].isStreaming = false
         }
+        // Clear TTS queue so the drain task stops after current sentence
+        pendingSentences.removeAll()
+        sentenceBuffer = ""
+        ttsIsRunning = false
+        responseIsComplete = false
+        Task { await speechOutput?.stop() }
         status = .idle
     }
 
@@ -205,8 +233,16 @@ final class ChatViewModel {
         }
     }
 
+    func stopSpeaking() async {
+        await speechOutput?.stop()
+        if case .speaking = status { status = .idle }
+    }
+
     func startListening() async {
         guard status == .idle else { return }
+
+        // Stop any active TTS before starting STT
+        await speechOutput?.stop()
 
         // Build speech input router if not already cached
         if speechInput == nil {
@@ -346,6 +382,9 @@ final class ChatViewModel {
     private func handleEvent(_ event: OrchestratorEvent) {
         switch event {
         case .thinkingStarted:
+            sentenceBuffer = ""
+            pendingSentences = []
+            responseIsComplete = false
             status = .thinking
             messages.append(ChatMessage(
                 id: UUID(),
@@ -359,6 +398,13 @@ final class ChatViewModel {
         case .textDelta(let text):
             if !messages.isEmpty && messages[messages.count - 1].role == .assistant {
                 messages[messages.count - 1].text += text
+            }
+            let ttsEnabled = UserDefaults.standard.object(forKey: "ttsEnabled") as? Bool ?? true
+            if ttsEnabled {
+                sentenceBuffer += text
+                let extracted = extractCompleteSentences(from: &sentenceBuffer)
+                pendingSentences.append(contentsOf: extracted)
+                startTTSDrainIfNeeded()
             }
 
         case .toolStarted(let name):
@@ -380,10 +426,107 @@ final class ChatViewModel {
             }
 
         case .completed:
-            status = .idle
             if !messages.isEmpty {
                 messages[messages.count - 1].isStreaming = false
             }
+            responseIsComplete = true
+            let ttsEnabled = UserDefaults.standard.object(forKey: "ttsEnabled") as? Bool ?? true
+            if ttsEnabled {
+                // Flush any remaining text that didn't end with a sentence terminator
+                let remaining = sentenceBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+                sentenceBuffer = ""
+                if !remaining.isEmpty {
+                    pendingSentences.append(remaining)
+                }
+                if pendingSentences.isEmpty && !ttsIsRunning {
+                    status = .idle
+                } else {
+                    startTTSDrainIfNeeded()
+                }
+            } else {
+                status = .idle
+            }
         }
+    }
+
+    /// Starts the TTS drain loop if there are pending sentences and no loop is already running.
+    private func startTTSDrainIfNeeded() {
+        guard !ttsIsRunning, !pendingSentences.isEmpty else { return }
+
+        if speechOutput == nil {
+            speechOutput = makeSpeechOutput()
+        }
+        guard let output = speechOutput else {
+            pendingSentences.removeAll()
+            if responseIsComplete { status = .idle }
+            return
+        }
+
+        ttsIsRunning = true
+        status = .speaking
+
+        Task { [weak self] in
+            guard let self else { return }
+            while !pendingSentences.isEmpty {
+                let sentence = pendingSentences.removeFirst()
+                do {
+                    try await output.speak(text: sentence)
+                } catch {
+                    Logger.tts.error("TTS sentence failed: \(error.localizedDescription)")
+                }
+            }
+            ttsIsRunning = false
+            if responseIsComplete {
+                status = .idle
+            }
+        }
+    }
+
+    /// Extracts complete sentences (terminated by `.` `!` `?` followed by whitespace) from `buffer`,
+    /// leaving any trailing incomplete sentence in `buffer`.
+    private func extractCompleteSentences(from buffer: inout String) -> [String] {
+        var sentences: [String] = []
+        let chars = Array(buffer)
+        let terminators: Set<Character> = [".", "!", "?"]
+        var searchFrom = 0
+        var i = 0
+
+        while i < chars.count {
+            let ch = chars[i]
+            if terminators.contains(ch) {
+                let nextIdx = i + 1
+                if nextIdx < chars.count && (chars[nextIdx] == " " || chars[nextIdx] == "\n") {
+                    let sentence = String(chars[searchFrom...i]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !sentence.isEmpty { sentences.append(sentence) }
+                    // Advance past the whitespace
+                    var skip = nextIdx
+                    while skip < chars.count && (chars[skip] == " " || chars[skip] == "\n") { skip += 1 }
+                    searchFrom = skip
+                    i = skip
+                    continue
+                }
+            }
+            i += 1
+        }
+
+        buffer = String(chars[searchFrom...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        return sentences
+    }
+
+    private func makeSpeechOutput() -> any SpeechOutputProviding {
+        let keychain = KeychainHelper()
+        let apiClient = APIClient()
+        let audioOutput = AVAudioEngineOutput()
+        let deepgramOutput = DeepgramSpeechOutput(
+            apiClient: apiClient,
+            audioOutput: audioOutput,
+            keychain: keychain
+        )
+        let appleOutput = AppleSpeechOutput()
+        return SpeechOutputRouter(
+            deepgramOutput: deepgramOutput,
+            appleOutput: appleOutput,
+            keychain: keychain
+        )
     }
 }

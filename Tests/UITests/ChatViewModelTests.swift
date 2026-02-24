@@ -28,7 +28,13 @@ struct ChatViewModelTests {
         )
         mock.shouldThrow = shouldThrow
         let keychain = MockKeychainHelper()
-        let vm = ChatViewModel(orchestrator: mock, keychainHelper: keychain)
+        // Inject mocks for speech so existing tests are not affected by real TTS/STT
+        let vm = ChatViewModel(
+            orchestrator: mock,
+            keychainHelper: keychain,
+            speechInput: MockSpeechInput(),
+            speechOutput: MockSpeechOutput()
+        )
         return (vm, mock)
     }
 

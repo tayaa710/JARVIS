@@ -139,6 +139,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 NSApp.activate(ignoringOtherApps: true)
                 Task { @MainActor [weak self] in
                     guard let self else { return }
+                    // Stop any active TTS before starting STT
+                    await self.viewModel?.stopSpeaking()
                     // Pause wake word detection while STT is active
                     await self.wakeWordDetector?.pause()
                     // Start speech input; wake word resumes after status returns to idle

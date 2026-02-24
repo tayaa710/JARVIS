@@ -94,6 +94,8 @@ struct DeepgramSpeechInputTests {
         input.onPartialTranscript = { partials.append($0) }
 
         try await input.startListening()
+        // Allow the receive Task to start and call transport.receive() before pushing
+        try await Task.sleep(nanoseconds: 30_000_000)
 
         let interimJSON = """
         {"type":"Results","is_final":false,"channel":{"alternatives":[{"transcript":"hello","confidence":0.9,"words":null}]}}
@@ -114,6 +116,8 @@ struct DeepgramSpeechInputTests {
         input.onFinalTranscript = { finals.append($0) }
 
         try await input.startListening()
+        // Allow the receive Task to start before pushing
+        try await Task.sleep(nanoseconds: 30_000_000)
 
         let finalJSON = """
         {"type":"Results","is_final":true,"channel":{"alternatives":[{"transcript":"open safari","confidence":0.99,"words":null}]}}
@@ -137,6 +141,8 @@ struct DeepgramSpeechInputTests {
         input.onFinalTranscript = { finals.append($0) }
 
         try await input.startListening()
+        // Allow the receive Task to start before pushing
+        try await Task.sleep(nanoseconds: 30_000_000)
 
         let interimJSON = """
         {"type":"Results","is_final":false,"channel":{"alternatives":[{"transcript":"hey jarvis","confidence":0.9,"words":null}]}}
@@ -169,6 +175,8 @@ struct DeepgramSpeechInputTests {
         input.onFinalTranscript = { _ in finalFired = true }
 
         try await input.startListening()
+        // Allow the receive Task to start before pushing
+        try await Task.sleep(nanoseconds: 30_000_000)
 
         // Push a partial
         let interimJSON = """

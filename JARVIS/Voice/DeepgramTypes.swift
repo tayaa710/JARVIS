@@ -62,3 +62,37 @@ struct DeepgramRawMessage: Decodable {
     let type: String
     let message: String?
 }
+
+// MARK: - TTS Types
+
+public struct DeepgramTTSVoice: Equatable {
+    public let modelID: String
+    public let displayName: String
+
+    public static let `default` = DeepgramTTSVoice(modelID: "aura-2-thalia-en", displayName: "Thalia (Female)")
+
+    public static let all: [DeepgramTTSVoice] = [
+        DeepgramTTSVoice(modelID: "aura-2-thalia-en",    displayName: "Thalia (Female)"),
+        DeepgramTTSVoice(modelID: "aura-2-apollo-en",    displayName: "Apollo (Male)"),
+        DeepgramTTSVoice(modelID: "aura-2-andromeda-en", displayName: "Andromeda (Female)"),
+        DeepgramTTSVoice(modelID: "aura-2-orion-en",     displayName: "Orion (Male)"),
+        DeepgramTTSVoice(modelID: "aura-2-helena-en",    displayName: "Helena (Female)"),
+        DeepgramTTSVoice(modelID: "aura-2-zeus-en",      displayName: "Zeus (Male)"),
+    ]
+}
+
+public struct DeepgramTTSConfig: Equatable {
+    public let model: String
+    public let encoding: String
+    public let sampleRate: Int
+
+    public init(
+        model: String = DeepgramTTSVoice.default.modelID,
+        encoding: String = "linear16",
+        sampleRate: Int = 24000
+    ) {
+        self.model = model
+        self.encoding = encoding
+        self.sampleRate = sampleRate
+    }
+}

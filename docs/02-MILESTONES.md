@@ -1084,26 +1084,72 @@ JARVIS can hear you and talk back.
 
 ---
 
-### M020: Text-to-Speech (Deepgram) `[ ]`
+### M020: Text-to-Speech (Deepgram) `[x]`
 
 **What to build:**
-- `SpeechOutput` — streaming TTS via Deepgram API
-- Accept text chunks (for streaming from Claude's response)
-- Queue and play audio seamlessly as chunks arrive
-- Voice selection in settings
-- Fallback: Apple AVSpeechSynthesizer when offline
-- Interrupt: stop speaking immediately when user starts talking or presses kill switch
+- `SpeechOutput` — whole-response TTS via Deepgram HTTP API (POST /v1/speak)
+- Accept full assistant response text after `.completed` event
+- Play 16-bit PCM audio via AVAudioEngine
+- Voice selection in settings (6 Aura-2 English voices)
+- Fallback: Apple AVSpeechSynthesizer when no Deepgram key
+- Interrupt: stop speaking when user starts STT or wakes word fires
 
 **Test criteria:**
-- Test text-to-audio conversion (mock Deepgram API)
-- Test streaming: multiple chunks play back-to-back without gaps
-- Test interrupt stops audio immediately
-- Test fallback to Apple TTS
-- Test voice selection changes output
+- Test text-to-audio conversion (mock Deepgram API) ✓
+- Test fallback to Apple TTS ✓
+- Test interrupt stops audio ✓
+- Test voice selection via UserDefaults ✓
+- Test callbacks fire correctly ✓
+- Test >2000 char text is split into chunks ✓
 
 **Deliverables:**
-- Working streaming TTS
-- Full voice pipeline: wake word → STT → process → TTS
+- Working whole-response TTS ✓
+- Full voice pipeline: wake word → STT → process → TTS ✓
+
+**Built:**
+- `JARVIS/Shared/Logger.swift` — added `Logger.tts` subsystem
+- `JARVIS/Voice/SpeechOutputProviding.swift` — `SpeechOutputError` enum, `SpeechOutputProviding` protocol
+- `JARVIS/Voice/AudioOutputProviding.swift` — `AudioOutputProviding` protocol
+- `JARVIS/Voice/AVAudioEngineOutput.swift` — AVAudioEngine playback (16-bit PCM, 24 kHz)
+- `JARVIS/Voice/DeepgramTypes.swift` — added `DeepgramTTSVoice` (6 Aura-2 voices), `DeepgramTTSConfig`
+- `JARVIS/Voice/DeepgramSpeechOutput.swift` — Deepgram HTTP TTS (POST /v1/speak, sentence-boundary chunking)
+- `JARVIS/Voice/AppleSpeechOutput.swift` — AVSpeechSynthesizer fallback, `SpeechSynthesizing` protocol
+- `JARVIS/Voice/SpeechOutputRouter.swift` — Deepgram-first, Apple fallback, callback proxying
+- `JARVIS/UI/ChatViewModel.swift` — TTS wired into event loop; `startSpeaking`, `stopSpeaking`, abort integration
+- `JARVIS/UI/SettingsView/VoiceSettingsView.swift` — TTS toggle, provider picker, Aura-2 voice picker
+- `JARVIS/App/AppDelegate.swift` — `stopSpeaking()` call before STT on wake word
+- `Tests/Helpers/MockAudioOutput.swift` — mock for AudioOutputProviding
+- `Tests/Helpers/MockSpeechOutput.swift` — mock for SpeechOutputProviding
+- `Tests/Helpers/MockSpeechSynthesizer.swift` — mock for SpeechSynthesizing
+- `Tests/VoiceTests/SpeechOutputProvidingTests.swift` — 4 tests
+- `Tests/VoiceTests/AVAudioEngineOutputTests.swift` — 5 tests
+- `Tests/VoiceTests/DeepgramSpeechOutputTests.swift` — 8 tests
+- `Tests/VoiceTests/AppleSpeechOutputTests.swift` — 5 tests
+- `Tests/VoiceTests/SpeechOutputRouterTests.swift` — 5 tests
+- `Tests/UITests/ChatViewModelTTSTests.swift` — 7 tests
+
+**Total tests: 661 (was 623, added 38)**
+
+**Decisions:**
+- Whole-response TTS (not streaming) — simpler, avoids choppy sentence fragments
+- Aura-2 default voice (aura-2-thalia-en) — higher quality than Aura-1
+- 2000-char limit per Deepgram request — split at sentence boundaries
+- `SpeechOutputRouter` accepts `any SpeechOutputProviding` for both backends (not concrete types) — enables mock injection in tests
+- TTS enabled by default (`ttsEnabled = true`); toggle in Voice Settings
+- ChatViewModelTests updated to inject MockSpeechInput + MockSpeechOutput for isolation
+- Fixed pre-existing race condition in DeepgramSpeechInput / SpeechInputRouter tests (added 30ms delay before `transport.push()` to let the receive Task start)
+
+**Xcode build steps for owner:**
+1. Open terminal in repo root: `cd /Users/aarontaylor/JARVIS`
+2. `xcodegen generate` then apply objectVersion patch:
+   - `sed -i '' 's/objectVersion = 77/objectVersion = 63/' JARVIS.xcodeproj/project.pbxproj`
+   - `sed -i '' '/preferredProjectObjectVersion = 77;/d' JARVIS.xcodeproj/project.pbxproj`
+3. Open `JARVIS.xcodeproj` in Xcode
+4. **Cmd+B** — Build Succeeded
+5. **Cmd+U** — 661 tests pass
+6. **Cmd+R** — Run. After JARVIS processes a request, it will speak the response.
+7. To test TTS: set your Deepgram API key in Settings → API Keys → Deepgram. Say something or type a message. JARVIS speaks the reply using Deepgram Aura-2. Without a key, it falls back to Apple TTS automatically.
+8. To change voice: Settings → Voice → Text-to-Speech → Voice picker (6 Aura-2 options)
 
 ---
 

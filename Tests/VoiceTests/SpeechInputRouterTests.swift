@@ -130,6 +130,10 @@ struct SpeechInputRouterTests {
 
         try await router.startListening()
 
+        // Allow the receive Task inside DeepgramSpeechInput to start and call transport.receive()
+        // before we push a message (otherwise the continuation is nil and the message is dropped).
+        try await Task.sleep(nanoseconds: 50_000_000)
+
         // Simulate a partial from Deepgram
         let interimJSON = """
         {"type":"Results","is_final":false,"channel":{"alternatives":[{"transcript":"test","confidence":0.9,"words":null}]}}

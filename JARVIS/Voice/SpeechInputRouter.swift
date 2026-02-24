@@ -90,13 +90,22 @@ public final class SpeechInputRouter: SpeechInputProviding {
 
     private func wireCallbacks(to input: DeepgramSpeechInput) {
         input.onPartialTranscript = { [weak self] text in self?.onPartialTranscript?(text) }
-        input.onFinalTranscript = { [weak self] text in self?.onFinalTranscript?(text) }
+        input.onFinalTranscript = { [weak self] text in
+            // Backend self-terminates on final transcript — keep router state in sync.
+            self?.isListening = false
+            self?.activeBackend = nil
+            self?.onFinalTranscript?(text)
+        }
         input.onError = { [weak self] error in self?.onError?(error) }
     }
 
     private func wireCallbacks(to input: AppleSpeechInput) {
         input.onPartialTranscript = { [weak self] text in self?.onPartialTranscript?(text) }
-        input.onFinalTranscript = { [weak self] text in self?.onFinalTranscript?(text) }
+        input.onFinalTranscript = { [weak self] text in
+            self?.isListening = false
+            self?.activeBackend = nil
+            self?.onFinalTranscript?(text)
+        }
         input.onError = { [weak self] error in self?.onError?(error) }
     }
 }

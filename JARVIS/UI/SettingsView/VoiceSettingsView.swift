@@ -1,9 +1,12 @@
 import SwiftUI
 
-/// Voice tab in Settings. Composes WakeWordSettingsView with STT provider controls.
+/// Voice tab in Settings. Composes WakeWordSettingsView with STT and TTS controls.
 struct VoiceSettingsView: View {
 
     @AppStorage("sttProvider") private var sttProvider: String = "auto"
+    @AppStorage("ttsEnabled") private var ttsEnabled: Bool = true
+    @AppStorage("ttsProvider") private var ttsProvider: String = "auto"
+    @AppStorage("ttsVoiceModel") private var ttsVoiceModel: String = DeepgramTTSVoice.default.modelID
     @State private var hasDeepgramKey: Bool = false
 
     var body: some View {
@@ -43,12 +46,29 @@ struct VoiceSettingsView: View {
             }
 
             Section("Text-to-Speech") {
-                LabeledContent("Provider") {
-                    Text("Deepgram (coming soon)")
+                Toggle("Enable Text-to-Speech", isOn: $ttsEnabled)
+
+                if ttsEnabled {
+                    Picker("Provider", selection: $ttsProvider) {
+                        Text("Auto (Deepgram if key set, else Apple)").tag("auto")
+                        Text("Deepgram").tag("deepgram")
+                        Text("Apple").tag("apple")
+                    }
+                    .pickerStyle(.radioGroup)
+
+                    if ttsProvider != "apple" {
+                        Picker("Voice", selection: $ttsVoiceModel) {
+                            ForEach(DeepgramTTSVoice.all, id: \.modelID) { voice in
+                                Text(voice.displayName).tag(voice.modelID)
+                            }
+                        }
+                    }
+
+                    Text("Deepgram Aura-2 voices require a Deepgram API key. Apple TTS works offline with no key required.")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
-            .disabled(true)
         }
         .formStyle(.grouped)
         .task {
