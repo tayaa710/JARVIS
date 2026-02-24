@@ -16,15 +16,38 @@ struct ChatInputView: View {
     @Binding var inputText: String
     let onSend: () -> Void
     let isEnabled: Bool
+    let isListening: Bool
+    let onMicTap: () -> Void
 
     @FocusState private var isFocused: Bool
     @State private var editorHeight: CGFloat = 40
+    @State private var micPulse: Bool = false
 
     private let minEditorHeight: CGFloat = 40
     private let maxEditorHeight: CGFloat = 120
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
+            // Mic button
+            Button(action: onMicTap) {
+                Image(systemName: isListening ? "mic.fill" : "mic")
+                    .font(.title2)
+                    .foregroundStyle(isListening ? Color.red : Color.secondary)
+                    .scaleEffect(micPulse ? 1.15 : 1.0)
+                    .animation(
+                        isListening
+                            ? .easeInOut(duration: 0.6).repeatForever(autoreverses: true)
+                            : .default,
+                        value: micPulse
+                    )
+            }
+            .buttonStyle(.plain)
+            .disabled(!isEnabled && !isListening)
+            .padding(.bottom, 8)
+            .onChange(of: isListening) { _, listening in
+                micPulse = listening
+            }
+
             TextEditor(text: $inputText)
                 .font(.body)
                 // Use computed height — avoids fixedSize on NSScrollView which triggers
@@ -38,6 +61,7 @@ struct ChatInputView: View {
                         .stroke(Color(NSColor.separatorColor), lineWidth: 1)
                 )
                 .focused($isFocused)
+                .disabled(isListening)
                 .onKeyPress(.return, phases: .down) { keyPress in
                     if keyPress.modifiers.contains(.command) {
                         // Cmd+Enter = new line (insert \n)
@@ -74,15 +98,17 @@ struct ChatInputView: View {
                     editorHeight = min(maxEditorHeight, max(minEditorHeight, height))
                 }
 
-            Button(action: onSend) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(canSend ? Color.accentColor : Color.secondary)
+            if !isListening {
+                Button(action: onSend) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(canSend ? Color.accentColor : Color.secondary)
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSend)
+                .keyboardShortcut(.return, modifiers: [])
+                .padding(.bottom, 8)
             }
-            .buttonStyle(.plain)
-            .disabled(!canSend)
-            .keyboardShortcut(.return, modifiers: [])
-            .padding(.bottom, 8)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -90,6 +116,6 @@ struct ChatInputView: View {
     }
 
     private var canSend: Bool {
-        isEnabled && !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        isEnabled && !isListening && !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

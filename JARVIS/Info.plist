@@ -18,6 +18,8 @@
     <string>JARVIS uses Automation to control Safari and other apps on your behalf.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>JARVIS uses the microphone to listen for your voice commands.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>JARVIS uses Speech Recognition as a fallback when Deepgram is unavailable.</string>
     <key>NSScreenCaptureUsageDescription</key>
     <string>JARVIS uses Screen Recording to capture screenshots when it cannot read the UI through Accessibility APIs.</string>
     <key>SUFeedURL</key>

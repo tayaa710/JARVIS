@@ -32,6 +32,18 @@ struct StatusIndicatorView: View {
         case .idle:
             EmptyView()
 
+        case .listening(let partial):
+            HStack(spacing: 6) {
+                Image(systemName: "waveform.and.mic")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                Text(partial.isEmpty ? "Listening…" : "\"\(partial)\"")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+
         case .thinking:
             HStack(spacing: 6) {
                 ProgressView()

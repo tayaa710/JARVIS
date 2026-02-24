@@ -70,6 +70,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await startWakeWordDetectionIfEnabled()
         }
 
+        // Resume wake word detection when status returns to idle after STT finishes.
+        Task { @MainActor [weak self] in
+            var lastWasListening = false
+            while !Task.isCancelled {
+                let isListening = vm.isListeningForSpeech
+                if lastWasListening && !isListening {
+                    // Transitioned from listening → not listening; resume wake word
+                    Task {
+                        try? await self?.wakeWordDetector?.resume()
+                        Logger.app.info("Wake word detection resumed after STT")
+                    }
+                }
+                lastWasListening = isListening
+                try? await Task.sleep(nanoseconds: 200_000_000) // poll every 200ms
+            }
+        }
+
         // Observe UserDefaults changes so the toggle works at runtime.
         wakeWordEnabledObserver = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification,
@@ -120,7 +137,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 NSSound(named: "Tink")?.play()
                 self?.panel?.makeKeyAndOrderFront(nil)
                 NSApp.activate(ignoringOtherApps: true)
-                // Placeholder: future milestone will trigger STT here
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    // Pause wake word detection while STT is active
+                    await self.wakeWordDetector?.pause()
+                    // Start speech input; wake word resumes after status returns to idle
+                    await self.viewModel?.startListening()
+                }
             }
             detector.onError = { error in
                 Logger.app.error("Wake word detection error: \(error)")

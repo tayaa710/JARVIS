@@ -4,6 +4,7 @@ import Foundation
 
 enum AssistantStatus: Equatable {
     case idle
+    case listening(String)   // associated value = partial transcript (may be empty)
     case thinking
     case executingTool(String)
     case speaking

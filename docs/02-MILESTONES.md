@@ -1008,28 +1008,79 @@ JARVIS can hear you and talk back.
 
 ---
 
-### M019: Speech-to-Text (Deepgram) `[ ]`
+### M019: Speech-to-Text (Deepgram) `[x]`
 
 **What to build:**
 - `SpeechInput` — streaming STT via Deepgram WebSocket API
 - Start recording → stream audio chunks → receive partial transcripts → receive final transcript
 - Visual feedback: show partial transcript in UI as user speaks
-- Silence detection: auto-stop after 2 seconds of silence
+- Silence detection: auto-stop after 2 seconds of silence (server-side via endpointing=2000)
 - Deepgram API key from Keychain
 - Fallback: Apple SFSpeechRecognizer when offline or Deepgram unavailable
 
 **Test criteria:**
-- Test WebSocket connection to Deepgram (mock server)
-- Test audio streaming sends correct format
-- Test partial transcript callback fires
-- Test final transcript callback fires
-- Test silence detection triggers stop
-- Test fallback to Apple Speech when Deepgram fails
+- Test WebSocket connection to Deepgram (mock server) ✓
+- Test audio streaming sends correct format ✓
+- Test partial transcript callback fires ✓
+- Test final transcript callback fires ✓
+- Test silence detection (UtteranceEnd) triggers stop ✓
+- Test fallback to Apple Speech when Deepgram fails ✓
 
 **Deliverables:**
-- Working streaming STT
-- Offline fallback
-- Visual feedback during speech
+- Working streaming STT ✓
+- Offline fallback ✓
+- Visual feedback during speech ✓
+
+**Built:**
+- `JARVIS/Voice/SpeechInputProviding.swift` — `SpeechInputProviding` protocol + `SpeechInputError` enum
+- `JARVIS/Voice/DeepgramTypes.swift` — `DeepgramTranscriptResponse`, `DeepgramChannel`, `DeepgramAlternative`, `DeepgramWord`, `DeepgramMessage` enum
+- `JARVIS/Voice/DeepgramWebSocketTransport.swift` — `WebSocketTaskProtocol` (URLSessionWebSocketTask conformance + mock-injectable), `DeepgramTransporting` protocol, `DeepgramWebSocketTransport` implementation with `AsyncThrowingStream` receive loop and JSON message parsing
+- `JARVIS/Voice/DeepgramSpeechInput.swift` — Full Deepgram STT: reads "deepgram_api_key" from Keychain, connects WebSocket to Deepgram nova-3 model with endpointing=2000, streams PCM frames as binary WebSocket messages, handles partial/final/UtteranceEnd messages, dispatches callbacks to main queue
+- `JARVIS/Voice/AppleSpeechInput.swift` — Apple SFSpeechRecognizer fallback: `SpeechRecognizerProtocol` with `SFSpeechRecognizer` retroactive conformance, 2-second client-side silence timer, AVAudioPCMBuffer conversion from Int16 PCM
+- `JARVIS/Voice/SpeechInputRouter.swift` — Checks Deepgram key in Keychain; uses Deepgram if available, falls back to Apple on missing key or connection failure
+- `JARVIS/UI/ChatTypes.swift` — Added `.listening(String)` case to `AssistantStatus` (associated value = partial transcript)
+- `JARVIS/UI/ChatInputView.swift` — Added mic button (mic.fill SF Symbol) left of text editor; pulsing red animation while listening; send button hidden while listening; text editor disabled while listening
+- `JARVIS/UI/StatusIndicatorView.swift` — Added `.listening` case displaying `waveform.and.mic` icon and partial transcript text
+- `JARVIS/UI/ChatView.swift` — Wired `isListening` and `onMicTap` to ChatInputView
+- `JARVIS/UI/ChatViewModel.swift` — `startListening()`, `stopListening()`, `toggleListening()` methods; `makeSpeechInput()` builds production `SpeechInputRouter`; `isListeningForSpeech` computed property for view binding; new init for STT tests
+- `JARVIS/App/AppDelegate.swift` — Wake-word → STT handoff: `onWakeWordDetected` now calls `viewModel.startListening()` after pausing wake word detector; polling loop resumes wake word when status returns to idle
+- `JARVIS/UI/SettingsView/VoiceSettingsView.swift` — Real STT provider picker (Auto/Deepgram/Apple Speech) with Deepgram key status indicator; Text-to-Speech remains placeholder
+- `JARVIS/Info.plist` — Added `NSSpeechRecognitionUsageDescription`
+- `JARVIS/Shared/Logger.swift` — Added `Logger.stt` subsystem
+- `Tests/Helpers/MockDeepgramTransport.swift` — `MockWebSocketTask` (factory-injected into DeepgramWebSocketTransport) + `MockDeepgramTransport` (push/finishWithError helpers)
+- `Tests/Helpers/MockSpeechInput.swift` — `MockSpeechInput` with `simulatePartial`, `simulateFinal`, `simulateError` helpers
+- `Tests/VoiceTests/DeepgramTypesTests.swift` — 7 tests: JSON decode for interim/final Results, UtteranceEnd, SpeechStarted, Metadata, unknown type, malformed JSON
+- `Tests/VoiceTests/DeepgramWebSocketTransportTests.swift` — 5 tests: connect, send data, send text, receive parsed messages, close sends CloseStream
+- `Tests/VoiceTests/DeepgramSpeechInputTests.swift` — 11 tests: API key read, missing key, mic denied, double-start, audio frames, partial callback, final callback, utteranceEnd, stop, cancel, error callback
+- `Tests/VoiceTests/AppleSpeechInputTests.swift` — 5 tests: auth request, denied, double-start, stop, cancel
+- `Tests/VoiceTests/SpeechInputRouterTests.swift` — 5 tests: route to Deepgram, fallback no key, fallback Deepgram fails, stop delegates, callbacks proxied
+- `Tests/UITests/ChatViewModelSTTTests.swift` — 7 tests: status set on start, partial updates input, final calls send, stop resets, error sets message, toggleListening starts/stops
+- `Tests/IntegrationTests/SpeechInputIntegrationTests.swift` — 4 end-to-end tests: full Deepgram flow, Deepgram failure → Apple fallback, cancel mid-transcription, UtteranceEnd fires final callback
+
+**Total tests: 623 (was 579, added 44)**
+
+**Decisions:**
+- Deepgram server-side endpointing (`endpointing=2000`) used instead of client-side silence detection — more reliable, one less moving part.
+- `is_final=true` triggers `onFinalTranscript` immediately (single clean callback to orchestrator); `UtteranceEnd` used as backup if no `is_final=true` arrives (fires with last seen partial transcript).
+- `WebSocketTaskProtocol` + `TaskFactory` injection pattern allows testing without a live WebSocket — mirrors CDPTransport pattern from M014.
+- `AppleSpeechInput` uses a 2-second `Task.sleep` silence timer as client-side endpointing (Apple has no server-side equivalent).
+- Wake-word → STT handoff uses a 200ms polling loop on `viewModel.isListeningForSpeech` to detect when to resume wake word. A future milestone could use Combine or `withObservationTracking` for a cleaner reactive approach.
+- `SpeechInputRouter` stores concrete `DeepgramSpeechInput` and `AppleSpeechInput` types (not existentials) to avoid Swift existential property-setting limitations.
+
+**Owner setup:**
+1. Get a Deepgram API key at console.deepgram.com (free tier includes $200 credits)
+2. Open JARVIS → Cmd+, → API Keys tab → paste Deepgram key
+3. Speak to JARVIS: say "Hey JARVIS" (wake word) — app activates and mic starts listening
+4. Or click the mic button in the chat input
+5. Your speech transcribes in real time in the input field; when you stop speaking, JARVIS processes it
+
+**Xcode build steps for owner:**
+1. Open terminal: `cd /Users/aarontaylor/JARVIS`
+2. Run `xcodegen generate` then patch project: `sed -i '' 's/objectVersion = 77/objectVersion = 63/g' JARVIS.xcodeproj/project.pbxproj && sed -i '' '/preferredProjectObjectVersion = 77;/d' JARVIS.xcodeproj/project.pbxproj`
+3. Open project: `open JARVIS.xcodeproj`
+4. Press **Cmd+B** — "Build Succeeded"
+5. Press **Cmd+U** — 623 tests, all green
+6. Press **Cmd+R** to run the app; configure Deepgram API key in Settings → API Keys
 
 ---
 

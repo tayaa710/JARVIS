@@ -65,6 +65,12 @@ final class ChatViewModel {
     var needsAPIKey: Bool = false
     var errorMessage: String?
 
+    // Computed for view binding
+    var isListeningForSpeech: Bool {
+        if case .listening = status { return true }
+        return false
+    }
+
     // MARK: - Dependencies
 
     private let keychainHelper: KeychainHelperProtocol
@@ -73,6 +79,7 @@ final class ChatViewModel {
 
     private var orchestrator: (any Orchestrator)?
     private var currentTask: Task<Void, Never>?
+    private var speechInput: (any SpeechInputProviding)?
 
     // MARK: - Init (production)
 
@@ -93,6 +100,19 @@ final class ChatViewModel {
         self.keychainHelper = keychainHelper
         self.orchestrator = orchestrator
         self.needsAPIKey = false
+    }
+
+    // MARK: - Init (for STT tests — accepts pre-built orchestrator + speechInput)
+
+    init(
+        orchestrator: any Orchestrator,
+        keychainHelper: KeychainHelperProtocol,
+        speechInput: any SpeechInputProviding
+    ) {
+        self.keychainHelper = keychainHelper
+        self.orchestrator = orchestrator
+        self.needsAPIKey = false
+        self.speechInput = speechInput
     }
 
     // MARK: - Public Methods
@@ -175,7 +195,84 @@ final class ChatViewModel {
         }
     }
 
+    // MARK: - STT
+
+    func toggleListening() {
+        if case .listening = status {
+            Task { await stopListening() }
+        } else {
+            Task { await startListening() }
+        }
+    }
+
+    func startListening() async {
+        guard status == .idle else { return }
+
+        // Build speech input router if not already cached
+        if speechInput == nil {
+            speechInput = makeSpeechInput()
+        }
+        guard let input = speechInput else { return }
+
+        input.onPartialTranscript = { [weak self] text in
+            self?.status = .listening(text)
+            self?.inputText = text
+        }
+        input.onFinalTranscript = { [weak self] text in
+            guard let self else { return }
+            self.status = .idle
+            self.inputText = text
+            self.send()
+        }
+        input.onError = { [weak self] error in
+            self?.status = .idle
+            self?.errorMessage = error.localizedDescription
+            Logger.stt.error("STT error: \(error.localizedDescription)")
+        }
+
+        status = .listening("")
+
+        do {
+            try await input.startListening()
+        } catch {
+            status = .idle
+            errorMessage = error.localizedDescription
+            Logger.stt.error("Failed to start listening: \(error.localizedDescription)")
+        }
+    }
+
+    func stopListening() async {
+        await speechInput?.stopListening()
+        status = .idle
+    }
+
     // MARK: - Private
+
+    private func makeSpeechInput() -> any SpeechInputProviding {
+        let keychain = KeychainHelper()
+        let audioInput = AVAudioEngineInput()
+        let permChecker = SystemMicrophonePermission()
+
+        let transport = DeepgramWebSocketTransport()
+        let deepgramInput = DeepgramSpeechInput(
+            transport: transport,
+            audioInput: audioInput,
+            permissionChecker: permChecker,
+            keychain: keychain
+        )
+
+        let appleAudioInput = AVAudioEngineInput()
+        let appleInput = AppleSpeechInput(
+            audioInput: appleAudioInput,
+            permissionChecker: permChecker
+        )
+
+        return SpeechInputRouter(
+            deepgramInput: deepgramInput,
+            appleInput: appleInput,
+            keychain: keychain
+        )
+    }
 
     private func createOrchestrator(apiKey: String) {
         let registry = ToolRegistryImpl()

@@ -18,7 +18,9 @@ struct ChatView: View {
             ChatInputView(
                 inputText: $viewModel.inputText,
                 onSend: viewModel.send,
-                isEnabled: viewModel.status == .idle
+                isEnabled: viewModel.status == .idle,
+                isListening: viewModel.isListeningForSpeech,
+                onMicTap: { viewModel.toggleListening() }
             )
         }
         .sheet(item: $viewModel.pendingConfirmation) { pending in
