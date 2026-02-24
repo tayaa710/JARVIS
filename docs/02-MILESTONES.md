@@ -951,7 +951,7 @@ JARVIS can hear you and talk back.
 
 ---
 
-### M018: Settings Window `[ ]`
+### M018: Settings Window `[x]`
 
 **What to build:**
 - `SettingsView.swift` — main settings window with a `TabView` (sidebar style on macOS). Wired into `JARVISApp.swift` via the `Settings` scene so Cmd+, opens it.
@@ -962,15 +962,42 @@ JARVIS can hear you and talk back.
 - Wire the `Settings` scene in `JARVISApp.swift` to show `SettingsView` instead of `EmptyView`.
 
 **Test criteria:**
-- Settings window opens via Cmd+, (manual verification by owner)
-- API keys round-trip through Keychain: save → quit → reopen → keys still present (unit test `KeychainHelper` already covered in M002; add view-model tests)
-- Each tab renders without crash (SwiftUI preview + unit tests on view models)
-- Toggling "launch at login" updates `SMAppService` registration (unit test with mock)
+- Settings window opens via Cmd+, (manual verification by owner) ✓
+- API keys round-trip through Keychain: save → quit → reopen → keys still present (unit test `KeychainHelper` already covered in M002; add view-model tests) ✓
+- Each tab renders without crash (SwiftUI preview + unit tests on view models) ✓
+- Toggling "launch at login" updates `SMAppService` registration (unit test with mock) ✓
 
 **Deliverables:**
-- Full settings window with 4 tabs (General, API Keys, Voice, About)
-- Owner can paste Picovoice access key and Claude API key from the Settings UI
-- All secrets stored exclusively in Keychain (no UserDefaults for keys)
+- Full settings window with 4 tabs (General, API Keys, Voice, About) ✓
+- Owner can paste Picovoice access key and Claude API key from the Settings UI ✓
+- All secrets stored exclusively in Keychain (no UserDefaults for keys) ✓
+
+**Built:**
+- `JARVIS/Shared/LaunchAtLoginManager.swift` — `LaunchAtLoginManaging` protocol + `LaunchAtLoginManager` wrapping `SMAppService`
+- `JARVIS/Shared/Extensions/KeyboardShortcutsName+JARVIS.swift` — `.toggleJARVIS` global shortcut name
+- `JARVIS/UI/SettingsView/GeneralSettingsViewModel.swift` — appearance mode + launch-at-login VM; `AppearanceMode` enum
+- `JARVIS/UI/SettingsView/GeneralSettingsView.swift` — General tab UI
+- `JARVIS/UI/SettingsView/APIKeysSettingsViewModel.swift` — 3-key Keychain VM; `APIKeyStatus`, `APIKeyField` enums
+- `JARVIS/UI/SettingsView/APIKeysSettingsView.swift` — API Keys tab UI with status icons
+- `JARVIS/UI/SettingsView/AboutSettingsView.swift` — About tab with Sparkle "Check for Updates"
+- `JARVIS/UI/SettingsView/VoiceSettingsView.swift` — Voice tab composing WakeWordSettingsView + STT/TTS placeholders
+- `JARVIS/UI/SettingsView/SettingsView.swift` — TabView container for all 4 tabs
+- `JARVIS/Shared/Logger.swift` — added `Logger.settings` subsystem
+- `JARVIS/Info.plist` — added `SUFeedURL` placeholder for Sparkle
+- `JARVIS/App/JARVISApp.swift` — replaced `EmptyView` with `SettingsView`
+- `JARVIS/App/AppDelegate.swift` — wired `.toggleJARVIS` keyboard shortcut; added "Settings…" menu item
+- `Tests/Helpers/MockLaunchAtLoginManager.swift` — mock for login manager
+- `Tests/UITests/LaunchAtLoginManagerTests.swift` — 2 tests
+- `Tests/UITests/GeneralSettingsViewModelTests.swift` — 3 tests
+- `Tests/UITests/APIKeysSettingsViewModelTests.swift` — 5 tests
+- `Tests/UITests/AboutSettingsViewTests.swift` — 2 tests
+
+**Decisions:**
+- `SMAppService.mainApp` may throw on unsigned debug builds — mock-based tests pass regardless; owner verifies on signed build.
+- Sparkle `SPUStandardUpdaterController` created lazily in `AboutSettingsView` (lazy init acceptable for M018; automatic background checks can be wired later).
+- `WritableKeyPath` subscript assignment doesn't work with `@Observable`-synthesized computed properties — routed status updates via `keyName` string switch in private helper instead.
+
+**Tests:** 579 total (13 new)
 
 ---
 

@@ -3,6 +3,7 @@ import SwiftUI
 import ApplicationServices
 import CoreGraphics
 import AVFoundation
+import KeyboardShortcuts
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -54,6 +55,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // automatically by macOS when AppleScript first sends events (NSAppleEventsUsageDescription).
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.requestPermissions()
+        }
+
+        // Wire the global keyboard shortcut (configured in General settings)
+        KeyboardShortcuts.onKeyUp(for: .toggleJARVIS) { [weak self] in
+            self?.togglePanel()
         }
 
         // Start wake word detection if enabled and access key is available.
@@ -147,6 +153,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "Show JARVIS", action: #selector(togglePanel), keyEquivalent: ""))
         menu.addItem(.separator())
+        let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.keyEquivalentModifierMask = .command
+        menu.addItem(settingsItem)
+        menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit JARVIS", action: #selector(quitApp), keyEquivalent: "q"))
 
         item.menu = menu
@@ -164,6 +174,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panel.makeKeyAndOrderFront(nil)
             statusItem?.menu?.item(at: 0)?.title = "Hide JARVIS"
         }
+    }
+
+    @objc private func openSettings() {
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func quitApp() {

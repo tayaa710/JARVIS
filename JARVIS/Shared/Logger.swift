@@ -94,4 +94,5 @@ public enum Logger {
     public static let cdp            = JARVISLogger(subsystem: "com.aidaemon", category: "cdp")
     public static let session        = JARVISLogger(subsystem: "com.aidaemon", category: "session")
     public static let wakeWord       = JARVISLogger(subsystem: "com.aidaemon", category: "wakeWord")
+    public static let settings       = JARVISLogger(subsystem: "com.aidaemon", category: "settings")
 }
