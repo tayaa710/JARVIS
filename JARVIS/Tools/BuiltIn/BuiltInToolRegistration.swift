@@ -42,6 +42,17 @@ func registerScreenshotTools(
     try registry.register(VisionAnalyzeTool(cache: cache, modelProvider: modelProvider))
 }
 
+// Registers the 6 browser tools (browser_navigate, browser_get_url, browser_get_text,
+// browser_find_element, browser_click, browser_type).
+func registerBrowserTools(in registry: any ToolRegistry, backend: any BrowserBackend) throws {
+    try registry.register(BrowserNavigateTool(backend: backend))
+    try registry.register(BrowserGetURLTool(backend: backend))
+    try registry.register(BrowserGetTextTool(backend: backend))
+    try registry.register(BrowserFindElementTool(backend: backend))
+    try registry.register(BrowserClickTool(backend: backend))
+    try registry.register(BrowserTypeTool(backend: backend))
+}
+
 // Registers the 4 input tools (keyboard_type, keyboard_shortcut, mouse_click, mouse_move).
 // Called after registerAXTools so the contextLockChecker can reference the orchestrator lock.
 func registerInputTools(

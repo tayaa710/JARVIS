@@ -820,13 +820,13 @@ JARVIS can browse the web and interact with websites.
 
 ---
 
-### M015: AppleScript Backend (Safari) + Browser Tools `[ ]`
+### M015: AppleScript Backend (Safari) + Browser Tools `[x]`
 
 **What to build:**
 - `AppleScriptBackend` — control Safari via NSAppleScript
 - Commands: navigate to URL, get current URL, get page text, run JavaScript
-- `BrowserToolExecutor` — unified tool executor that routes to correct backend based on BrowserDetector
-- Browser tools (all route through BrowserToolExecutor):
+- `BrowserRouter` — routes to CDP or AppleScript based on frontmost browser
+- Browser tools (all route through BrowserRouter):
   - `browser_navigate` — go to URL
   - `browser_get_url` — get current URL
   - `browser_get_text` — get page text content
@@ -835,15 +835,40 @@ JARVIS can browse the web and interact with websites.
   - `browser_type` — type into an element
 
 **Test criteria:**
-- AppleScript: test correct AppleScript generated for each command
-- BrowserToolExecutor: test routes to CDP for Chrome, AppleScript for Safari
-- Each browser tool: test with valid and invalid arguments
-- Integration: fixture test where Claude navigates and interacts with a page
+- AppleScript: test correct AppleScript generated for each command ✓
+- BrowserRouter: test routes to CDP for Chrome, AppleScript for Safari ✓
+- Each browser tool: test with valid and invalid arguments ✓
+- Integration: fixture test where Claude navigates and interacts with a page ✓
 
 **Deliverables:**
-- Safari support
-- 6 unified browser tools
-- Browser control complete
+- Safari support via AppleScript ✓
+- 6 unified browser tools ✓
+- Browser control complete ✓
+
+**Built:**
+- `JARVIS/Tools/Browser/BrowserBackend.swift` — `BrowserBackend` protocol (7 high-level browser commands)
+- `JARVIS/Tools/Browser/BrowserError.swift` — `BrowserError` enum (noBrowserDetected, unsupportedBrowser, scriptFailed, navigationFailed)
+- `JARVIS/Tools/Browser/AppleScriptBackend.swift` — Safari control via NSAppleScript with closure-injected script runner for testing
+- `JARVIS/Tools/Browser/BrowserRouter.swift` — Routes to AppleScript (Safari) or CDP (Chromium); auto-connects CDP on first use; `CDPBrowserBackendAdapter` adapts navigate return type
+- `JARVIS/Tools/BuiltIn/BrowserNavigateTool.swift` — `browser_navigate` (.caution)
+- `JARVIS/Tools/BuiltIn/BrowserGetURLTool.swift` — `browser_get_url` (.safe)
+- `JARVIS/Tools/BuiltIn/BrowserGetTextTool.swift` — `browser_get_text` (.safe, supports max_length truncation)
+- `JARVIS/Tools/BuiltIn/BrowserFindElementTool.swift` — `browser_find_element` (.safe, CSS selector + text search)
+- `JARVIS/Tools/BuiltIn/BrowserClickTool.swift` — `browser_click` (.caution)
+- `JARVIS/Tools/BuiltIn/BrowserTypeTool.swift` — `browser_type` (.caution)
+- `Tests/Helpers/MockBrowserBackend.swift` — Full mock with configurable results/errors and call recording
+- `Tests/ToolTests/AppleScriptBackendTests.swift` — 11 tests for AppleScript generation and escaping
+- `Tests/ToolTests/BrowserRouterTests.swift` — 10 tests for routing logic and CDP connection management
+- `Tests/ToolTests/BrowserToolTests.swift` — 36 tests for all 6 browser tools
+- `Tests/IntegrationTests/BrowserToolsIntegrationTests.swift` — 3 full-loop orchestrator tests
+- Modified `BuiltInToolRegistration.swift` — added `registerBrowserTools(in:backend:)`
+- Modified `ChatViewModel.swift` — wires BrowserRouter with real backends at startup
+
+**Notes:**
+- Safari requires "Automation" permission in System Settings → Privacy & Security → Automation. macOS will prompt on first use.
+- Chrome must be launched with `--remote-debugging-port=9222` for CDP to work. If not, the tool returns a clear error.
+- Firefox and unknown browsers return `BrowserError.unsupportedBrowser` (not a crash, just an error result).
+- Total tests: **514** (was 454)
 
 ---
 

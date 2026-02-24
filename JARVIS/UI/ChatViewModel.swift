@@ -188,6 +188,19 @@ final class ChatViewModel {
             modelProvider: modelProvider
         )
 
+        // Register browser tools
+        let browserDetector = BrowserDetector()
+        let cdpTransport = URLSessionCDPTransport()
+        let cdpDiscovery = CDPDiscoveryImpl()
+        let cdpBackend = CDPBackendImpl(transport: cdpTransport, discovery: cdpDiscovery)
+        let appleScriptBackend = AppleScriptBackend()
+        let browserRouter = BrowserRouter(
+            detector: browserDetector,
+            cdpBackend: cdpBackend,
+            appleScriptBackend: appleScriptBackend
+        )
+        try? registerBrowserTools(in: registry, backend: browserRouter)
+
         orchestrator = orch
     }
 
