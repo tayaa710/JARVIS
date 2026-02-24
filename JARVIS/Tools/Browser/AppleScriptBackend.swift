@@ -3,20 +3,26 @@ import AppKit
 
 // MARK: - AppleScriptBackend
 
-/// Controls Safari via AppleScript + JavaScript injection.
+/// Controls browsers via AppleScript + JavaScript injection.
+/// Uses a `dialect` to generate correct AppleScript for Safari vs Chromium.
 /// Uses closure injection for the script runner so tests can verify
 /// generated scripts without executing real AppleScript.
 public final class AppleScriptBackend: BrowserBackend, @unchecked Sendable {
 
-    // MARK: - Script Runner
+    // MARK: - Properties
+
+    /// The AppleScript dialect (Safari vs Chrome) that determines command syntax.
+    public let dialect: AppleScriptDialect
 
     /// Closure that executes an AppleScript string and returns the result.
     /// Production default uses NSAppleScript on the main actor.
-    private let scriptRunner: @Sendable (String) async throws -> String
+    /// Internal access so BrowserRouter can reuse it for fallback backends.
+    let scriptRunner: @Sendable (String) async throws -> String
 
     // MARK: - Init
 
     public init(
+        dialect: AppleScriptDialect = .safari,
         scriptRunner: @Sendable @escaping (String) async throws -> String = { script in
             return try await MainActor.run {
                 let appleScript = NSAppleScript(source: script)
@@ -31,6 +37,7 @@ public final class AppleScriptBackend: BrowserBackend, @unchecked Sendable {
             }
         }
     ) {
+        self.dialect = dialect
         self.scriptRunner = scriptRunner
     }
 
@@ -38,77 +45,56 @@ public final class AppleScriptBackend: BrowserBackend, @unchecked Sendable {
 
     public func navigate(url: String) async throws {
         let escapedURL = escapeAppleScriptString(url)
-        let script = """
-        tell application "Safari"
-            set URL of current tab of front window to "\(escapedURL)"
-        end tell
-        """
-        Logger.browser.info("AppleScript navigate: \(url)")
+        let script = dialect.navigateScript(escapedURL: escapedURL)
+        Logger.browser.info("AppleScript navigate (\(dialect.appName)): \(url)")
         _ = try await scriptRunner(script)
     }
 
     public func getURL() async throws -> String {
-        let script = """
-        tell application "Safari"
-            get URL of current tab of front window
-        end tell
-        """
-        Logger.browser.info("AppleScript getURL")
+        let script = dialect.getURLScript()
+        Logger.browser.info("AppleScript getURL (\(dialect.appName))")
         return try await scriptRunner(script)
     }
 
     public func getText() async throws -> String {
-        let script = """
-        tell application "Safari"
-            do JavaScript "document.body.innerText.substring(0, 10000)" in current tab of front window
-        end tell
-        """
-        Logger.browser.info("AppleScript getText")
+        let js = escapeAppleScriptString("document.body.innerText.substring(0, 10000)")
+        let script = dialect.executeJSScript(js: js)
+        Logger.browser.info("AppleScript getText (\(dialect.appName))")
         return try await scriptRunner(script)
     }
 
     public func findElement(selector: String) async throws -> Bool {
         let escapedSelector = escapeJSString(selector)
-        let script = """
-        tell application "Safari"
-            do JavaScript "!!document.querySelector('\(escapedSelector)')" in current tab of front window
-        end tell
-        """
-        Logger.browser.info("AppleScript findElement: \(selector)")
+        let js = escapeAppleScriptString("!!document.querySelector('\(escapedSelector)')")
+        let script = dialect.executeJSScript(js: js)
+        Logger.browser.info("AppleScript findElement (\(dialect.appName)): \(selector)")
         let result = try await scriptRunner(script)
         return result.trimmingCharacters(in: .whitespacesAndNewlines) == "true"
     }
 
     public func clickElement(selector: String) async throws {
         let escapedSelector = escapeJSString(selector)
-        let script = """
-        tell application "Safari"
-            do JavaScript "(function(){ var el = document.querySelector('\(escapedSelector)'); if (!el) throw new Error('Not found'); el.click(); })()" in current tab of front window
-        end tell
-        """
-        Logger.browser.info("AppleScript clickElement: \(selector)")
+        let jsCode = "(function(){ var el = document.querySelector('\(escapedSelector)'); if (!el) throw new Error('Not found'); el.click(); })()"
+        let js = escapeAppleScriptString(jsCode)
+        let script = dialect.executeJSScript(js: js)
+        Logger.browser.info("AppleScript clickElement (\(dialect.appName)): \(selector)")
         _ = try await scriptRunner(script)
     }
 
     public func typeInElement(selector: String, text: String) async throws {
         let escapedSelector = escapeJSString(selector)
         let escapedText = escapeJSString(text)
-        let script = """
-        tell application "Safari"
-            do JavaScript "(function(){ var el = document.querySelector('\(escapedSelector)'); if (!el) throw new Error('Not found'); el.focus(); el.value = '\(escapedText)'; el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); })()" in current tab of front window
-        end tell
-        """
-        Logger.browser.info("AppleScript typeInElement: \(selector)")
+        let jsCode = "(function(){ var el = document.querySelector('\(escapedSelector)'); if (!el) throw new Error('Not found'); el.focus(); el.value = '\(escapedText)'; el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); })()"
+        let js = escapeAppleScriptString(jsCode)
+        let script = dialect.executeJSScript(js: js)
+        Logger.browser.info("AppleScript typeInElement (\(dialect.appName)): \(selector)")
         _ = try await scriptRunner(script)
     }
 
     public func evaluateJS(_ expression: String) async throws -> String {
-        let script = """
-        tell application "Safari"
-            do JavaScript "\(escapeAppleScriptString(expression))" in current tab of front window
-        end tell
-        """
-        Logger.browser.info("AppleScript evaluateJS")
+        let js = escapeAppleScriptString(expression)
+        let script = dialect.executeJSScript(js: js)
+        Logger.browser.info("AppleScript evaluateJS (\(dialect.appName))")
         return try await scriptRunner(script)
     }
 

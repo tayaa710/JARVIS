@@ -7,7 +7,7 @@ struct BrowserGetTextTool: ToolExecutor {
 
     let definition = ToolDefinition(
         name: "browser_get_text",
-        description: "Returns the visible text content of the current browser page. Use this to read page content without taking a screenshot.",
+        description: "Returns the visible text content of the current browser page. Prefer this over screenshot + vision_analyze for reading page content. Fast and returns structured text.",
         inputSchema: .object([
             "type": .string("object"),
             "properties": .object([

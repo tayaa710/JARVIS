@@ -3,12 +3,13 @@ import Foundation
 // MARK: - BrowserRouter
 
 /// Routes browser commands to the correct backend based on the frontmost browser.
-/// - Safari → AppleScriptBackend
-/// - Chromium (Chrome, Arc, Edge, Brave, etc.) → CDPBackendProtocol
+/// - Safari → AppleScriptBackend (safari dialect)
+/// - Chromium (Chrome, Arc, Edge, Brave, etc.) → CDPBackendProtocol, with AppleScript fallback
 /// - Firefox / unknown → BrowserError.unsupportedBrowser
 /// - Nothing frontmost → BrowserError.noBrowserDetected
 ///
-/// CDP auto-connects on first use and reconnects if the connection drops.
+/// CDP auto-connects on first use. If CDP connection fails (e.g. Chrome wasn't launched
+/// with --remote-debugging-port), falls back to AppleScript with the chrome dialect.
 public final class BrowserRouter: BrowserBackend, @unchecked Sendable {
 
     // MARK: - Dependencies
@@ -18,18 +19,26 @@ public final class BrowserRouter: BrowserBackend, @unchecked Sendable {
     private let appleScriptBackend: AppleScriptBackend
     private let cdpPort: Int
 
+    /// Factory for creating AppleScript fallback backends for Chromium browsers.
+    /// Internal for testing — production uses the default that creates a real backend.
+    let appleScriptFallbackFactory: @Sendable (String) -> AppleScriptBackend
+
     // MARK: - Init
 
     public init(
         detector: any BrowserDetecting,
         cdpBackend: any CDPBackendProtocol,
         appleScriptBackend: AppleScriptBackend,
-        cdpPort: Int = 9222
+        cdpPort: Int = 9222,
+        appleScriptFallbackFactory: (@Sendable (String) -> AppleScriptBackend)? = nil
     ) {
         self.detector = detector
         self.cdpBackend = cdpBackend
         self.appleScriptBackend = appleScriptBackend
         self.cdpPort = cdpPort
+        self.appleScriptFallbackFactory = appleScriptFallbackFactory ?? { appName in
+            AppleScriptBackend(dialect: .chrome(appName: appName))
+        }
     }
 
     // MARK: - BrowserBackend
@@ -73,7 +82,7 @@ public final class BrowserRouter: BrowserBackend, @unchecked Sendable {
     // MARK: - Private
 
     /// Detects the frontmost browser and returns the appropriate backend.
-    /// For Chromium, ensures CDP is connected before returning.
+    /// For Chromium, tries CDP first; falls back to AppleScript if CDP connect fails.
     private func resolveBackend() async throws -> any BrowserBackend {
         guard let info = detector.detectFrontmostBrowser() else {
             throw BrowserError.noBrowserDetected
@@ -84,15 +93,18 @@ public final class BrowserRouter: BrowserBackend, @unchecked Sendable {
             return appleScriptBackend
 
         case .chromium:
-            if !cdpBackend.isConnected {
-                do {
-                    try await cdpBackend.connect(port: cdpPort)
-                } catch {
-                    Logger.browser.error("CDP connect failed: \(error)")
-                    throw error
-                }
+            if cdpBackend.isConnected {
+                return CDPBrowserBackendAdapter(backend: cdpBackend)
             }
-            return CDPBrowserBackendAdapter(backend: cdpBackend)
+            do {
+                try await cdpBackend.connect(port: cdpPort)
+                return CDPBrowserBackendAdapter(backend: cdpBackend)
+            } catch {
+                Logger.browser.warning(
+                    "CDP connect failed for \(info.name), falling back to AppleScript: \(error.localizedDescription)"
+                )
+                return appleScriptFallbackFactory(info.name)
+            }
 
         case .firefox:
             throw BrowserError.unsupportedBrowser("\(info.name) is not supported. Use Safari or a Chromium browser.")

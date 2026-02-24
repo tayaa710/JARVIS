@@ -7,7 +7,7 @@ struct BrowserClickTool: ToolExecutor {
 
     let definition = ToolDefinition(
         name: "browser_click",
-        description: "Clicks a DOM element in the current browser page matching the given CSS selector.",
+        description: "Clicks a DOM element in the current browser page matching the given CSS selector. Prefer this over mouse_click with pixel coordinates for web page elements.",
         inputSchema: .object([
             "type": .string("object"),
             "properties": .object([

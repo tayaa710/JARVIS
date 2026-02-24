@@ -7,7 +7,7 @@ struct BrowserNavigateTool: ToolExecutor {
 
     let definition = ToolDefinition(
         name: "browser_navigate",
-        description: "Navigates the current browser tab to a URL. Works with Safari and Chromium browsers (Chrome, Arc, Edge, Brave). Chrome must be launched with --remote-debugging-port=9222.",
+        description: "Navigates the current browser tab to a URL. Works with Safari and Chromium browsers (Chrome, Arc, Edge, Brave). Prefer this over typing URLs into the address bar with keyboard_type.",
         inputSchema: .object([
             "type": .string("object"),
             "properties": .object([
