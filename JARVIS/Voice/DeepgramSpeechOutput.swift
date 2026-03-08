@@ -17,7 +17,7 @@ public final class DeepgramSpeechOutput: SpeechOutputProviding {
     // MARK: - Dependencies
 
     private let apiClient: APIClientProtocol
-    private let audioOutput: AudioOutputProviding
+    let audioOutput: AudioOutputProviding
     private let keychain: KeychainHelperProtocol
 
     // MARK: - State
@@ -41,15 +41,6 @@ public final class DeepgramSpeechOutput: SpeechOutputProviding {
     public func speak(text: String) async throws {
         guard !isSpeaking else { throw SpeechOutputError.alreadySpeaking }
 
-        guard let keyData = try? keychain.read(key: "deepgram_api_key"),
-              let apiKey = String(data: keyData, encoding: .utf8),
-              !apiKey.isEmpty else {
-            throw SpeechOutputError.apiKeyMissing
-        }
-
-        let voiceModel = UserDefaults.standard.string(forKey: "ttsVoiceModel")
-            ?? DeepgramTTSVoice.default.modelID
-
         isSpeaking = true
         let chunks = splitText(text)
         var isFirst = true
@@ -58,15 +49,7 @@ public final class DeepgramSpeechOutput: SpeechOutputProviding {
 
         do {
             for chunk in chunks {
-                let url = "https://api.deepgram.com/v1/speak?model=\(voiceModel)&encoding=linear16&sample_rate=24000"
-                let headers = [
-                    "Authorization": "Token \(apiKey)",
-                    "Content-Type": "application/json"
-                ]
-                let bodyJSON = ["text": chunk]
-                let bodyData = try JSONEncoder().encode(bodyJSON)
-
-                let (audioData, _) = try await apiClient.post(url: url, headers: headers, body: bodyData)
+                let audioData = try await synthesizeAudio(text: chunk)
 
                 if isFirst {
                     onStarted?()
@@ -92,6 +75,30 @@ public final class DeepgramSpeechOutput: SpeechOutputProviding {
             Logger.tts.error("DeepgramSpeechOutput: failed — \(error.localizedDescription)")
             throw ttsError
         }
+    }
+
+    /// Fetch audio data from Deepgram without playing it.
+    /// Used by the prefetch pipeline to synthesize ahead of playback.
+    public func synthesizeAudio(text: String) async throws -> Data {
+        guard let keyData = try? keychain.read(key: "deepgram_api_key"),
+              let apiKey = String(data: keyData, encoding: .utf8),
+              !apiKey.isEmpty else {
+            throw SpeechOutputError.apiKeyMissing
+        }
+
+        let voiceModel = UserDefaults.standard.string(forKey: "ttsVoiceModel")
+            ?? DeepgramTTSVoice.default.modelID
+
+        let url = "https://api.deepgram.com/v1/speak?model=\(voiceModel)&encoding=linear16&sample_rate=24000"
+        let headers = [
+            "Authorization": "Token \(apiKey)",
+            "Content-Type": "application/json"
+        ]
+        let bodyJSON = ["text": text]
+        let bodyData = try JSONEncoder().encode(bodyJSON)
+
+        let (audioData, _) = try await apiClient.post(url: url, headers: headers, body: bodyData)
+        return audioData
     }
 
     public func stop() async {

@@ -12,12 +12,14 @@ final class MockSpeechOutput: SpeechOutputProviding {
     private(set) var speakCallCount = 0
     private(set) var stopCallCount = 0
     private(set) var lastSpokenText: String?
+    private(set) var allSpokenTexts: [String] = []
 
     var speakError: Error?
 
     func speak(text: String) async throws {
         speakCallCount += 1
         lastSpokenText = text
+        allSpokenTexts.append(text)
         if let error = speakError { throw error }
         isSpeaking = true
         onStarted?()

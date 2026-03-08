@@ -110,7 +110,8 @@ struct ChatViewModelSTTTests {
         #expect(vm.status == .idle)
 
         vm.toggleListening()
-        try await Task.sleep(nanoseconds: 50_000_000)
+        // startListening has a 250ms echo-prevention delay, so wait longer
+        try await Task.sleep(nanoseconds: 400_000_000)
 
         #expect(vm.isListeningForSpeech == true)
         await vm.stopListening()

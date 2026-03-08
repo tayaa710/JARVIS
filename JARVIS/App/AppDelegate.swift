@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var wakeWordDetector: WakeWordDetectorImpl?
     private var wakeWordEnabledObserver: NSObjectProtocol?
     private var lastKnownWakeWordEnabled: Bool = false
+    private var wakeWordPausedForTTS: Bool = false
 
     // MARK: - Application Lifecycle
 
@@ -23,6 +24,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Build the shared ViewModel
         let vm = ChatViewModel()
         self.viewModel = vm
+
+        // Wire TTS ↔ wake word pause/resume
+        vm.onTTSActiveChanged = { [weak self] isSpeaking in
+            guard let self else { return }
+            Task { @MainActor in
+                if isSpeaking {
+                    // Pause wake word while JARVIS speaks to prevent echo triggering
+                    await self.wakeWordDetector?.pause()
+                    self.wakeWordPausedForTTS = true
+                    Logger.app.info("Wake word paused (TTS active)")
+                } else if self.wakeWordPausedForTTS {
+                    // Resume wake word after TTS finishes
+                    try? await self.wakeWordDetector?.resume()
+                    self.wakeWordPausedForTTS = false
+                    Logger.app.info("Wake word resumed (TTS finished)")
+                }
+            }
+        }
 
         // Build the floating NSPanel
         let panel = NSPanel(

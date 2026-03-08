@@ -3,6 +3,8 @@ import Foundation
 // MARK: - SpeechOutputRouter
 
 /// Routes TTS to Deepgram (if API key is present) or Apple Speech (fallback).
+/// Exposes `deepgramBackend` and `audioOutputForPipeline` so that the
+/// ChatViewModel prefetch pipeline can synthesize audio and play it directly.
 public final class SpeechOutputRouter: SpeechOutputProviding {
 
     // MARK: - SpeechOutputProviding
@@ -14,9 +16,20 @@ public final class SpeechOutputRouter: SpeechOutputProviding {
 
     // MARK: - Dependencies
 
-    private let deepgramOutput: any SpeechOutputProviding
+    private let deepgramProvider: any SpeechOutputProviding
+    private let _deepgramBackend: DeepgramSpeechOutput?
     private let appleOutput: any SpeechOutputProviding
     private let keychain: KeychainHelperProtocol
+
+    /// Exposed for the prefetch pipeline — returns the Deepgram backend if available.
+    public var deepgramBackend: DeepgramSpeechOutput? {
+        hasDeepgramKey() ? _deepgramBackend : nil
+    }
+
+    /// Exposed for the prefetch pipeline — returns the audio output used by Deepgram.
+    public var audioOutputForPipeline: AudioOutputProviding? {
+        _deepgramBackend?.audioOutput
+    }
 
     // MARK: - Internal State
 
@@ -29,7 +42,8 @@ public final class SpeechOutputRouter: SpeechOutputProviding {
         appleOutput: any SpeechOutputProviding,
         keychain: KeychainHelperProtocol
     ) {
-        self.deepgramOutput = deepgramOutput
+        self.deepgramProvider = deepgramOutput
+        self._deepgramBackend = deepgramOutput as? DeepgramSpeechOutput
         self.appleOutput = appleOutput
         self.keychain = keychain
     }
@@ -41,10 +55,10 @@ public final class SpeechOutputRouter: SpeechOutputProviding {
 
         if hasKey {
             do {
-                wireCallbacks(to: deepgramOutput)
+                wireCallbacks(to: deepgramProvider)
                 isSpeaking = true
-                try await deepgramOutput.speak(text: text)
-                activeBackend = deepgramOutput
+                try await deepgramProvider.speak(text: text)
+                activeBackend = deepgramProvider
                 isSpeaking = false
                 Logger.tts.info("SpeechOutputRouter: used Deepgram backend")
             } catch {
@@ -76,7 +90,7 @@ public final class SpeechOutputRouter: SpeechOutputProviding {
 
     // MARK: - Private
 
-    private func hasDeepgramKey() -> Bool {
+    func hasDeepgramKey() -> Bool {
         guard let data = try? keychain.read(key: "deepgram_api_key"),
               let key = String(data: data, encoding: .utf8),
               !key.isEmpty else { return false }
