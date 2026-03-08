@@ -1153,11 +1153,126 @@ JARVIS can hear you and talk back.
 
 ---
 
+## Phase 4.5 — Visual Identity (Priority)
+
+JARVIS looks the part. Before expanding capabilities, the interface gets a full Iron Man HUD treatment.
+
+### M021: JARVIS Visual Identity `[x]`
+
+**What to build:**
+
+A complete visual overhaul of the UI. Every surface, animation, and interaction should feel like Tony Stark's HUD — dark, precise, and alive. All implemented in pure SwiftUI (no third-party animation libraries).
+
+**Design system to establish:**
+
+| Token | Value | Use |
+|---|---|---|
+| `jarvisBlack` | `#080C14` | Window/panel backgrounds |
+| `jarvisBlue` | `#00AAFF` | Primary accent, borders, glow |
+| `jarvisCyan` | `#00FFFF` | JARVIS text, data readouts |
+| `jarvisPurple` | `#7B2FBE` | Secondary accent, subtle highlights |
+| `jarvisDanger` | `#FF4545` | Danger/destructive actions |
+| `jarvisGlass` | `.ultraThinMaterial` + 1px `jarvisBlue` @30% | All panel surfaces |
+
+**Components to build:**
+
+1. **`JARVISTheme.swift`** — centralized color, font (SF Mono for JARVIS output, SF Pro for UI), spacing, and animation duration constants. All views import this; no hardcoded hex values anywhere else.
+
+2. **Redesigned `FloatingWindow` / `NSPanel`** — Dark borderless panel, corner brackets rendered as 4 L-shaped `Canvas` overlays (8px arms, `jarvisBlue` at 60%), subtle 1px blue border with 0.3 opacity. Panel itself uses `NSVisualEffectView` with `.dark` appearance and `.underWindowBackground` material.
+
+3. **Redesigned `ChatView`** — Panel background with `jarvisBlack` + very faint 3% opacity horizontal scanline stripe texture (drawn in `Canvas`). Subtle animated corner brackets pulse when JARVIS is thinking (brightness oscillation at 0.5Hz).
+
+4. **Redesigned `MessageBubbleView`** —
+   - **JARVIS messages**: left-aligned, no bubble background, cyan `SF Mono` text that reveals character-by-character during streaming (each character fades in with a 15ms stagger). A thin 1px `jarvisBlue` left-border accent line.
+   - **User messages**: right-aligned dark glass card (`.ultraThinMaterial`, `jarvisBlue` at 10% tint), white SF Pro text, subtle drop shadow.
+   - Tool call pills: `jarvisPurple` background, monospace label, animated loading dots while executing.
+
+5. **Redesigned `StatusIndicatorView`** — Replace static SF Symbols with custom animated states:
+   - **Idle**: small dim blue dot (3pt radius)
+   - **Thinking**: arc reactor spinner — two concentric arcs rotating in opposite directions via `TimelineView`, `jarvisBlue` stroked, 24pt diameter
+   - **Executing**: same spinner + small tool name label in `SF Mono 10pt`
+   - **Listening**: expanding sonar rings — three `Circle` strokes that expand from 12pt→40pt and fade out, offset by 0.3s each, `jarvisCyan`
+   - **Speaking**: 5-bar equalizer waveform bars animating up/down via `TimelineView`, `jarvisBlue`
+
+6. **`BootSequenceView.swift`** — Shown for 1.8 seconds when the chat window first opens (once per session). Displays:
+   - `"INITIALIZING JARVIS v2.0..."` in `SF Mono 12pt jarvisCyan`, each character revealing with 25ms stagger
+   - Three line items fading in sequentially: `"[✓] NEURAL INTERFACE READY"`, `"[✓] TOOL REGISTRY LOADED"`, `"[✓] VOICE PIPELINE ACTIVE"`
+   - Fades out and reveals `ChatView` via `matchedGeometryEffect`
+
+7. **`ParticleFieldView.swift`** — Background particle ambient effect. Using `Canvas` + `TimelineView(.animation(minimumInterval: 0.016))`: 40 tiny dots (2px) drifting slowly, random velocities, wrap at edges, `jarvisBlue` at 15% opacity. Rendered behind the chat panel. CPU cost: negligible (Canvas draws into a single pass).
+
+8. **Redesigned `ChatInputView`** — Dark glass input field, 1px `jarvisBlue` border that glows (shadow radius 4 when focused), SF Pro placeholder "Message JARVIS..." in blue at 40% opacity. Mic button in `jarvisCyan`, send arrow in `jarvisBlue`.
+
+9. **Updated menu bar icon** — Replace current brain icon with a custom SF Symbol or simple arc reactor circle that pulses (animates between 80%–100% brightness) when JARVIS is active.
+
+10. **`HUDCornerBrackets.swift`** — Reusable `ViewModifier` that overlays 4 corner L-shapes on any view. Used by floating window, confirmation dialogs, etc.
+
+**Test criteria:**
+- `JARVISTheme` constants compile and are accessible from all views ✓
+- `BootSequenceView` completes animation in 1.8 ± 0.3s (unit test with mock clock) ✓
+- `ParticleFieldView` initialises with correct particle count (unit test) ✓
+- `MessageBubbleView`: test user message and JARVIS message render correct layout ✓ (SwiftUI snapshot/unit tests on ViewModel)
+- `StatusIndicatorView`: test each status case maps to correct display state ✓
+- No hardcoded hex colours anywhere outside `JARVISTheme.swift` ✓ (grep check in CI)
+- Manual: window looks correct — dark glass, corner brackets, animations running
+
+**Deliverables:**
+- Complete visual overhaul matching JARVIS HUD aesthetic
+- Design system documented in `JARVISTheme.swift` — single source of truth
+- All animations 60fps, no jank
+- Boot sequence on window open
+
+**Files to create:**
+- `JARVIS/UI/JARVISTheme.swift`
+- `JARVIS/UI/BootSequenceView.swift`
+- `JARVIS/UI/ParticleFieldView.swift`
+- `JARVIS/UI/HUDCornerBrackets.swift`
+
+**Files to rewrite:**
+- `JARVIS/UI/MessageBubbleView.swift`
+- `JARVIS/UI/StatusIndicatorView.swift`
+- `JARVIS/UI/ChatInputView.swift`
+- `JARVIS/UI/ChatView.swift`
+- `JARVIS/App/AppDelegate.swift` (window styling, menu bar icon)
+
+**New dependencies:** None — pure SwiftUI + NSVisualEffectView (already available).
+
+**Permissions needed:** None new.
+
+**Xcode build steps for owner:**
+1. `cd /Users/aarontaylor/JARVIS && xcodegen generate` then apply objectVersion patch
+2. Open `JARVIS.xcodeproj` → **Cmd+B** → Build Succeeded
+3. **Cmd+U** → all tests green
+4. **Cmd+R** → window opens, boot sequence plays, dark glass HUD appears
+
+**Built:**
+- `JARVIS/UI/JARVISTheme.swift` — design system (colors, fonts, spacing, animation durations)
+- `JARVIS/UI/HUDCornerBrackets.swift` — reusable `ViewModifier` drawing 4 L-shaped corner brackets; `View.hudCornerBrackets()` convenience extension
+- `JARVIS/UI/ParticleFieldView.swift` — 40-particle ambient field via `TimelineView` + `Canvas`; `ParticleState` struct + `makeInitialParticles()` / `wrapped()` static helpers (testable)
+- `JARVIS/UI/BootSequenceView.swift` — typewriter init line + sequential checkmarks; `BootSequenceController` `@Observable` class drives timing (testable); `BootPhase` enum
+- `JARVIS/UI/StatusIndicatorView.swift` — full rewrite: `StatusDisplayConfig` enum with `from(_:)` factory; custom `ArcReactorSpinner`, `SonarRingsView`, `EqualizerView` sub-views all driven by `TimelineView`
+- `JARVIS/UI/MessageBubbleView.swift` — full rewrite: `MessageLayoutConfig` / `BubbleAlignment` / `ToolCallPillState` for testable layout logic; cyan SF Mono JARVIS bubbles with left-border accent; dark glass user bubbles; purple tool-call pills with loading dots; `BlinkingCursor` for streaming
+- `JARVIS/UI/ChatInputView.swift` — full rewrite: `ChatInputViewState.canSend()` extracted for unit tests; dark glass input with focus glow; cyan mic button; HUD placeholder text
+- `JARVIS/UI/ChatView.swift` — full rewrite: `ParticleFieldView` + `ScanlineOverlay` + `BootSequenceView` overlay; corner bracket pulse; HUD API-key overlay
+- `JARVIS/App/AppDelegate.swift` — NSPanel dark background + hidden title bar; custom `arcReactorImage()` menu bar icon (arc reactor concentric circles via `NSBezierPath`)
+- `JARVIS/UI/ConfirmationDialog.swift` — HUD restyle: cyan header, blue arguments in SF Mono, danger/blue buttons, `hudCornerBrackets()` frame
+- `Tests/UITests/JARVISVisualIdentityTests.swift` — 35 new tests across 8 suites
+
+**Total tests: 696 (was 661, added 35)**
+
+**Decisions:**
+- Boot sequence overlay uses simple opacity fade (no `matchedGeometryEffect`) — simpler and equally effective
+- Character reveal capped at 150 chars before snapping to full text — avoids 7+ second animation on long responses
+- Menu bar icon drawn via `NSBezierPath` (arc reactor circles) — NSStatusItem doesn't support SwiftUI animations
+- Corner bracket pulse uses a simple Timer (not TimelineView) since it drives a `@State` on the whole view, not a Canvas
+
+---
+
 ## Phase 5 — MCP Integration
 
 JARVIS gains access to thousands of community tools.
 
-### M021: MCP Client `[ ]`
+### M023: MCP Client `[ ]`
 
 **What to build:**
 - `MCPClient` — connects to an MCP server process via stdin/stdout JSON-RPC
@@ -1178,7 +1293,7 @@ JARVIS gains access to thousands of community tools.
 
 ---
 
-### M022: MCP Server Manager + Integration `[ ]`
+### M024: MCP Server Manager + Integration `[ ]`
 
 **What to build:**
 - `MCPServerManager` — manages multiple MCP server processes
@@ -1206,7 +1321,7 @@ JARVIS gains access to thousands of community tools.
 
 JARVIS starts remembering and anticipating.
 
-### M023: Conversation Persistence `[ ]`
+### M026: Conversation Persistence `[ ]`
 
 **What to build:**
 - `ConversationStore` — save and load conversation history
@@ -1228,14 +1343,14 @@ JARVIS starts remembering and anticipating.
 
 ---
 
-### M024: Episodic Memory `[ ]`
+### M027: Episodic Memory `[ ]`
 
 **What to build:**
 - `MemoryStore` — SQLite database for memories
 - At conversation end: send conversation to Claude with "summarise this and extract key user facts"
 - Store: session summary, extracted facts, timestamp
 - At conversation start: retrieve recent and relevant memories, inject into system prompt
-- Relevance: keyword matching on facts (full vector search comes later in M030)
+- Relevance: keyword matching on facts (full vector search comes later in M033)
 - Settings: view memories, delete individual memories, clear all
 
 **Test criteria:**
@@ -1252,7 +1367,7 @@ JARVIS starts remembering and anticipating.
 
 ---
 
-### M025: Context Compression `[ ]`
+### M028: Context Compression `[ ]`
 
 **What to build:**
 - When conversation history exceeds token limit (configurable, default 50,000 tokens):
@@ -1273,7 +1388,7 @@ JARVIS starts remembering and anticipating.
 
 ---
 
-### M026: Task Manager (Long-Running Workflows) `[ ]`
+### M029: Task Manager (Long-Running Workflows) `[ ]`
 
 **What to build:**
 - `TaskManager` — handles multi-step tasks that take minutes or hours
@@ -1302,7 +1417,7 @@ JARVIS starts remembering and anticipating.
 
 JARVIS becomes enjoyable to use.
 
-### M027: Personality System `[ ]`
+### M030: Personality System `[ ]`
 
 **What to build:**
 - Personality presets: Professional, Friendly, Sarcastic, British Butler
@@ -1322,7 +1437,7 @@ JARVIS becomes enjoyable to use.
 
 ---
 
-### M028: Settings and Onboarding (Polish) `[ ]`
+### M031: Settings and Onboarding (Polish) `[ ]`
 
 **What to build:**
 - Complete settings view (split into tab files, each under 300 lines):
@@ -1353,7 +1468,7 @@ JARVIS becomes enjoyable to use.
 
 ---
 
-### M029: Ambient Awareness `[ ]`
+### M032: Ambient Awareness `[ ]`
 
 **What to build:**
 - `AmbientMonitor` with pluggable observers:
@@ -1380,7 +1495,7 @@ JARVIS becomes enjoyable to use.
 
 JARVIS gets smarter and more capable.
 
-### M030: Self-Built Tools `[ ]`
+### M033: Self-Built Tools `[ ]`
 
 **What to build:**
 - When JARVIS can't do something, it can write a script and save it as a new custom tool
@@ -1404,7 +1519,7 @@ JARVIS gets smarter and more capable.
 
 ---
 
-### M031: Vector Memory (sqlite-vec) `[ ]`
+### M034: Vector Memory (sqlite-vec) `[ ]`
 
 **What to build:**
 - Add sqlite-vec extension to the SQLite database
@@ -1427,7 +1542,7 @@ JARVIS gets smarter and more capable.
 
 ---
 
-### M032: Phone Notifications for Approvals `[ ]`
+### M035: Phone Notifications for Approvals `[ ]`
 
 **What to build:**
 - Companion notification system (implementation TBD — could be iOS app, iMessage, email, or push notification)
@@ -1449,9 +1564,226 @@ JARVIS gets smarter and more capable.
 
 ---
 
-## Phase 9 — Ship It
+## Phase 9 — Hand Gesture Control
 
-### M033: Security Audit `[ ]`
+JARVIS responds to your hands. Move windows, approve actions, and control your Mac the way Tony Stark would.
+
+### M036: Hand Gesture Engine `[ ]`
+
+**What to build:**
+
+The core gesture recognition pipeline. Uses Apple's Vision framework (`VNDetectHumanHandPoseRequest`) — no third-party dependencies. Runs in a background thread, same always-on pattern as Porcupine wake word.
+
+**Architecture:**
+
+```
+AVCaptureSession (camera frames)
+    ↓
+VNImageRequestHandler (per-frame Vision request)
+    ↓
+VNDetectHumanHandPoseRequest → VNHumanHandPoseObservation (21 landmarks/hand)
+    ↓
+GestureClassifier (geometry math on landmarks)
+    ↓
+GestureTracker (debounce, sustain, velocity)
+    ↓
+HandGestureDetecting callbacks (onGesture, onLandmarkUpdate)
+```
+
+**Gestures to classify:**
+
+| Gesture | Detection Logic |
+|---|---|
+| `pinch` | `distance(thumbTip, indexTip) < 40px` |
+| `openPalm` | All 5 fingertips extended above MCP joints |
+| `closedFist` | All fingertips below MCP joints |
+| `point` | Index extended, middle+ring+pinky curled |
+| `thumbsUp` | Thumb extended upward, others curled, wrist below thumb |
+| `thumbsDown` | Thumb extended downward, others curled |
+| `peace` | Index + middle extended, others curled |
+| `swipe(Direction)` | Palm centroid velocity > threshold in one axis |
+| `unknown` | Fallback |
+
+**What to build:**
+
+- `HandGestureDetecting` protocol — `startDetection()`, `stopDetection()`, `onGesture: ((HandGesture, HandLandmarks) -> Void)?`, `onError: ((Error) -> Void)?`
+- `HandLandmarks` struct — 21 `CGPoint` landmark positions (normalized 0-1) + per-point confidence scores. `Sendable`.
+- `HandGesture` enum — all gestures above + associated `Direction` for swipe. `Sendable`, `Equatable`.
+- `GestureClassifier` — stateless `struct`, `classify(landmarks: HandLandmarks) -> HandGesture`. Pure geometry, fully unit-testable.
+- `GestureTracker` — tracks gesture state over time. Requires a gesture to be sustained for `minSustainFrames` (default 3) before firing. Debounces same gesture repeating within `debounceInterval` (default 0.4s). Emits velocity for swipes.
+- `CameraHandGestureProvider` — production implementation. `AVCaptureSession` with front camera, `AVCaptureVideoDataOutput`, `VNImageRequestHandler` per frame. Runs Vision requests on dedicated serial `DispatchQueue`. Not unit-tested (requires camera hardware).
+- `HandGestureSettingsView.swift` — enable/disable toggle, sensitivity slider (maps to `minSustainFrames` 2-5), live preview showing which gesture is currently detected (for calibration).
+- `Logger.gesture` subsystem.
+- `NSCameraUsageDescription` in `Info.plist`.
+- Camera permission helper (`CameraPermission.swift`), matching pattern of `MicrophonePermission.swift`.
+
+**Test criteria:**
+- `GestureClassifier`: test each gesture classification with synthetic landmark coordinates ✓
+- `GestureClassifier`: test edge cases — low confidence landmarks fall back to `unknown` ✓
+- `GestureTracker`: test gesture must sustain N frames before firing ✓
+- `GestureTracker`: test debounce suppresses repeated same-gesture events ✓
+- `GestureTracker`: test swipe velocity calculation ✓
+- `CameraPermission`: test returns `denied` when not granted (mock `AVCaptureDevice.authorizationStatus`) ✓
+- Integration: `MockHandGestureProvider` fires gestures, verify callbacks fire with correct data ✓
+
+**Deliverables:**
+- Full gesture recognition engine, fully tested
+- Live gesture preview in settings for calibration
+- Foundation for M037 window control and M038 command gestures
+
+**Files to create:**
+- `JARVIS/Voice/HandGestureDetecting.swift` — protocol + error + `HandLandmarks` + `HandGesture`
+- `JARVIS/Voice/GestureClassifier.swift`
+- `JARVIS/Voice/GestureTracker.swift`
+- `JARVIS/Voice/CameraHandGestureProvider.swift`
+- `JARVIS/Voice/CameraPermission.swift`
+- `JARVIS/UI/SettingsView/HandGestureSettingsView.swift`
+- `JARVIS/Shared/Logger.swift` — add `Logger.gesture` subsystem
+- `Tests/Helpers/MockHandGestureProvider.swift`
+- `Tests/VoiceTests/GestureClassifierTests.swift`
+- `Tests/VoiceTests/GestureTrackerTests.swift`
+- `Tests/VoiceTests/CameraPermissionTests.swift`
+- `Tests/IntegrationTests/HandGestureIntegrationTests.swift`
+
+**Permissions needed:** Camera (`NSCameraUsageDescription`)
+
+---
+
+### M037: Gesture Window Control `[ ]`
+
+**What to build:**
+
+Map hand gestures to real window manipulation. Use the gesture engine from M036 to let the user physically grab and move/resize windows with their hands — the Iron Man experience.
+
+**Coordinate mapping:**
+
+Camera space (0,0)–(1,1) normalized → screen space (0,0)–(screenWidth,screenHeight).
+
+```
+screenX = (1.0 - handX) * screenWidth   // mirrored: hand right = screen right
+screenY = handY * screenHeight
+```
+
+Calibration: 3-point calibration procedure (touch top-left, top-right, bottom-center corners with pinch gesture) corrects for camera angle and distance. Stored in `UserDefaults`. Can be re-run from settings.
+
+**Gesture → Window Action mapping:**
+
+| Gesture | Action |
+|---|---|
+| Pinch + hold (>0.5s) | Begin dragging frontmost window |
+| Pinch + hold + move | Move frontmost window (live, smooth) |
+| Release pinch | Drop window at current position |
+| Two pinches spread (both hands) | Resize frontmost window larger |
+| Two pinches squeeze (both hands) | Resize frontmost window smaller |
+| Closed fist (hold >0.8s) | Minimize frontmost window |
+| Open palm (hold >0.5s) | Show all windows (Mission Control via `CGEvent`) |
+| Point at off-screen direction | Move window toward that edge |
+
+**Window manipulation implementation:**
+
+Use `AXUIElementSetAttributeValue` with `kAXPositionAttribute` and `kAXSizeAttribute` directly — fast, synchronous, no AppleScript overhead. Already have this infrastructure from M009. Update rate: 60fps during drag (matches display refresh).
+
+**Visual feedback:**
+
+- Semi-transparent crosshair overlay (lives in a separate always-on-top overlay `NSPanel`, click-through) showing where your hand is on screen
+- When pinch-dragging: target window gets a subtle blue glow border (accessibility highlight)
+- Overlay panel dismissed when gesture control is disabled
+
+**What to build:**
+- `GestureWindowController` — subscribes to `HandGestureDetecting`, translates gesture events to AX window operations. State machine: idle → dragging → resizing.
+- `HandCalibration` struct — stores 3-point calibration matrix, `save()`/`load()` via UserDefaults.
+- `GestureOverlayWindow.swift` — click-through `NSPanel` showing hand cursor position. `NSWindowLevel.floating + 1`.
+- `GestureCoordinateMapper` — maps landmarks to screen coords using calibration. Stateless, fully testable with synthetic landmarks.
+- Wire into `AppDelegate` — gesture controller starts/stops with app lifecycle. Disabled if camera permission denied.
+- Settings: enable/disable gesture window control, calibrate button, sensitivity.
+
+**Test criteria:**
+- `GestureCoordinateMapper`: test normalized coords map to correct screen positions ✓
+- `GestureCoordinateMapper`: test calibration matrix corrects for offset ✓
+- `GestureWindowController`: test drag state machine transitions (idle → dragging → idle) ✓
+- `GestureWindowController`: test resize state machine transitions ✓
+- `GestureWindowController`: test window position update calls correct AX method (mock AX service) ✓
+- `HandCalibration`: test save/load round-trip ✓
+- Integration: mock gesture provider fires pinch sequence, verify AX service receives move calls ✓
+
+**Deliverables:**
+- Move and resize windows with your hands
+- Smooth 60fps dragging with live visual feedback
+- Calibration flow in settings
+
+**Files to create:**
+- `JARVIS/Tools/ComputerControl/GestureWindowController.swift`
+- `JARVIS/Tools/ComputerControl/GestureCoordinateMapper.swift`
+- `JARVIS/Tools/ComputerControl/HandCalibration.swift`
+- `JARVIS/UI/GestureOverlayWindow.swift`
+- `Tests/ToolTests/GestureCoordinateMapperTests.swift`
+- `Tests/ToolTests/GestureWindowControllerTests.swift`
+- `Tests/ToolTests/HandCalibrationTests.swift`
+- `Tests/IntegrationTests/GestureWindowIntegrationTests.swift`
+
+---
+
+### M038: Advanced Gesture Commands `[ ]`
+
+**What to build:**
+
+Higher-level gesture commands that integrate with JARVIS's conversation and approval system. Thumbs up approves destructive actions without touching the keyboard. Custom gesture → command bindings.
+
+**Built-in bindings:**
+
+| Gesture | JARVIS Action |
+|---|---|
+| 👍 Thumbs Up | Approve pending confirmation dialog (`.requireConfirmation → true`) |
+| 👎 Thumbs Down | Deny pending confirmation dialog (`.requireConfirmation → false`) |
+| ✌️ Peace Sign | Take a screenshot (calls `screenshot` tool) |
+| 👋 Open Palm (held, facing camera) | Abort current JARVIS operation (calls `orchestrator.abort()`) |
+| 🤫 Index to lips | Mute/unmute TTS output |
+| Custom | User-defined: any gesture → any shell command |
+
+**User-configurable mappings:**
+- Settings UI: gesture picker + action picker for up to 5 custom bindings
+- Actions: run shell command, open app, trigger keyboard shortcut, send message to JARVIS
+
+**Confirmation dialog integration:**
+- `ConfirmationDialog` shows gesture hint: "👍 approve · 👎 deny"
+- `PolicyEngine.requireConfirmation` path checks for gesture approval via `GestureCommandController`
+- Timeout: if no gesture within 30s, falls back to standard button UI
+
+**What to build:**
+- `GestureCommandController` — subscribes to `HandGestureDetecting`, maps gestures to registered commands. Checks context (only applies thumbs up/down when a confirmation is pending).
+- `GestureBinding` struct — `gesture: HandGesture`, `action: GestureAction` enum (confirmApprove, confirmDeny, abortJarvis, takescreenshot, muteTTS, shellCommand(String), openApp(String)).
+- `GestureBindingsStore` — save/load custom bindings from UserDefaults. Up to 10 bindings.
+- `GestureCommandSettingsView.swift` — list of bindings with add/remove, gesture picker (with live camera preview), action picker.
+- Update `ConfirmationDialog.swift` — show gesture hint when gesture control is enabled.
+- Update `ChatViewModel` — expose `pendingConfirmation` state so `GestureCommandController` can resolve it.
+
+**Test criteria:**
+- `GestureCommandController`: test thumbs up resolves pending confirmation ✓
+- `GestureCommandController`: test thumbs down rejects pending confirmation ✓
+- `GestureCommandController`: test abort fires `orchestrator.abort()` ✓
+- `GestureCommandController`: test no-op when no confirmation pending (thumbs up doesn't fire anything) ✓
+- `GestureBindingsStore`: test save/load round-trip ✓
+- `GestureBindingsStore`: test max 10 bindings enforced ✓
+- Integration: mock gesture provider fires thumbsUp, mock orchestrator receives resume-with-true ✓
+
+**Deliverables:**
+- Approve/deny JARVIS actions with hand gestures
+- User-configurable gesture → command system
+- Confirmation dialog shows gesture hints when gesture control is active
+
+**Files to create:**
+- `JARVIS/Tools/ComputerControl/GestureCommandController.swift`
+- `JARVIS/Tools/ComputerControl/GestureBindingsStore.swift`
+- `JARVIS/UI/SettingsView/GestureCommandSettingsView.swift`
+- `Tests/ToolTests/GestureCommandControllerTests.swift`
+- `Tests/ToolTests/GestureBindingsStoreTests.swift`
+- `Tests/IntegrationTests/GestureCommandIntegrationTests.swift`
+
+---
+
+## Phase 10 — Ship It
+
+### M039: Security Audit `[ ]`
 
 **What to build:**
 - Review all tool executors for injection vulnerabilities
@@ -1475,7 +1807,7 @@ JARVIS gets smarter and more capable.
 
 ---
 
-### M034: Auto-Updates and Distribution `[ ]`
+### M040: Auto-Updates and Distribution `[ ]`
 
 **What to build:**
 - Sparkle integration for auto-updates
@@ -1496,7 +1828,7 @@ JARVIS gets smarter and more capable.
 
 ---
 
-### M035: Beta Release `[ ]`
+### M041: Beta Release `[ ]`
 
 **What to build:**
 - Landing page (simple, can be GitHub Pages or similar)

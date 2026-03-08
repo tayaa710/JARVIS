@@ -9,6 +9,15 @@ private struct EditorHeightKey: PreferenceKey {
     }
 }
 
+// MARK: - Can-Send Logic (testable)
+
+/// Pure logic extracted from ChatInputView so it can be unit-tested without a view.
+enum ChatInputViewState {
+    static func canSend(text: String, isEnabled: Bool, isListening: Bool) -> Bool {
+        isEnabled && !isListening && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
 // MARK: - Chat Input View
 
 struct ChatInputView: View {
@@ -26,96 +35,129 @@ struct ChatInputView: View {
     private let minEditorHeight: CGFloat = 40
     private let maxEditorHeight: CGFloat = 120
 
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            // Mic button
-            Button(action: onMicTap) {
-                Image(systemName: isListening ? "mic.fill" : "mic")
-                    .font(.title2)
-                    .foregroundStyle(isListening ? Color.red : Color.secondary)
-                    .scaleEffect(micPulse ? 1.15 : 1.0)
-                    .animation(
-                        isListening
-                            ? .easeInOut(duration: 0.6).repeatForever(autoreverses: true)
-                            : .default,
-                        value: micPulse
-                    )
-            }
-            .buttonStyle(.plain)
-            .disabled(!isEnabled && !isListening)
-            .padding(.bottom, 8)
-            .onChange(of: isListening) { _, listening in
-                micPulse = listening
-            }
-
-            TextEditor(text: $inputText)
-                .font(.body)
-                // Use computed height — avoids fixedSize on NSScrollView which triggers
-                // -layoutSubtreeIfNeeded recursion on macOS.
-                .frame(height: editorHeight)
-                .scrollContentBackground(.hidden)
-                .background(Color(NSColor.textBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(NSColor.separatorColor), lineWidth: 1)
-                )
-                .focused($isFocused)
-                .disabled(isListening)
-                .onKeyPress(.return, phases: .down) { keyPress in
-                    if keyPress.modifiers.contains(.command) {
-                        // Cmd+Enter = new line (insert \n)
-                        inputText += "\n"
-                        return .handled
-                    }
-                    // Enter alone = send
-                    if canSend {
-                        onSend()
-                        return .handled
-                    }
-                    return .ignored
-                }
-                // Height oracle: a hidden Text mirror sized with fixedSize (safe on Text,
-                // not on TextEditor/NSScrollView). Reports its height via PreferenceKey.
-                .background(
-                    Text(inputText.isEmpty ? " " : inputText)
-                        .font(.body)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 4)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .background(
-                            GeometryReader { geo in
-                                Color.clear.preference(
-                                    key: EditorHeightKey.self,
-                                    value: geo.size.height
-                                )
-                            }
-                        )
-                        .opacity(0)
-                        .allowsHitTesting(false)
-                )
-                .onPreferenceChange(EditorHeightKey.self) { height in
-                    editorHeight = min(maxEditorHeight, max(minEditorHeight, height))
-                }
-
-            if !isListening {
-                Button(action: onSend) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(canSend ? Color.accentColor : Color.secondary)
-                }
-                .buttonStyle(.plain)
-                .disabled(!canSend)
-                .keyboardShortcut(.return, modifiers: [])
-                .padding(.bottom, 8)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color(NSColor.windowBackgroundColor))
+    private var canSend: Bool {
+        ChatInputViewState.canSend(text: inputText, isEnabled: isEnabled, isListening: isListening)
     }
 
-    private var canSend: Bool {
-        isEnabled && !isListening && !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            micButton
+            inputField
+            if !isListening {
+                sendButton
+            }
+        }
+        .padding(.horizontal, JARVISTheme.messagePadding)
+        .padding(.vertical, 8)
+        .background(JARVISTheme.jarvisBlack.opacity(0.8))
+    }
+
+    // MARK: - Mic Button
+
+    private var micButton: some View {
+        Button(action: onMicTap) {
+            Image(systemName: isListening ? "mic.fill" : "mic")
+                .font(.title2)
+                .foregroundStyle(isListening ? JARVISTheme.jarvisCyan : JARVISTheme.jarvisBlue40)
+                .scaleEffect(micPulse ? 1.15 : 1.0)
+                .animation(
+                    isListening
+                        ? .easeInOut(duration: 0.6).repeatForever(autoreverses: true)
+                        : .default,
+                    value: micPulse
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled && !isListening)
+        .padding(.bottom, 8)
+        .onChange(of: isListening) { _, listening in
+            micPulse = listening
+        }
+    }
+
+    // MARK: - Input Field
+
+    private var inputField: some View {
+        TextEditor(text: $inputText)
+            .font(JARVISTheme.jarvisUI)
+            .foregroundStyle(Color.white)
+            .frame(height: editorHeight)
+            .scrollContentBackground(.hidden)
+            .background(JARVISTheme.jarvisBlack.opacity(0.7))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(
+                        isFocused ? JARVISTheme.jarvisBlue : JARVISTheme.jarvisBlueDim,
+                        lineWidth: 1
+                    )
+                    .shadow(
+                        color: isFocused ? JARVISTheme.jarvisBlue.opacity(0.4) : .clear,
+                        radius: 4
+                    )
+            )
+            .focused($isFocused)
+            .disabled(isListening)
+            .overlay(placeholderText, alignment: .topLeading)
+            .onKeyPress(.return, phases: .down) { keyPress in
+                if keyPress.modifiers.contains(.command) {
+                    inputText += "\n"
+                    return .handled
+                }
+                if canSend {
+                    onSend()
+                    return .handled
+                }
+                return .ignored
+            }
+            // Height oracle: a hidden Text mirror
+            .background(
+                Text(inputText.isEmpty ? " " : inputText)
+                    .font(JARVISTheme.jarvisUI)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 4)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(
+                                key: EditorHeightKey.self,
+                                value: geo.size.height
+                            )
+                        }
+                    )
+                    .opacity(0)
+                    .allowsHitTesting(false)
+            )
+            .onPreferenceChange(EditorHeightKey.self) { height in
+                editorHeight = min(maxEditorHeight, max(minEditorHeight, height))
+            }
+    }
+
+    // MARK: - Placeholder
+
+    @ViewBuilder
+    private var placeholderText: some View {
+        if inputText.isEmpty && !isListening {
+            Text("Message JARVIS…")
+                .font(JARVISTheme.jarvisUI)
+                .foregroundStyle(JARVISTheme.jarvisBlue40)
+                .padding(.top, 8)
+                .padding(.leading, 5)
+                .allowsHitTesting(false)
+        }
+    }
+
+    // MARK: - Send Button
+
+    private var sendButton: some View {
+        Button(action: onSend) {
+            Image(systemName: "arrow.up.circle.fill")
+                .font(.title2)
+                .foregroundStyle(canSend ? JARVISTheme.jarvisBlue : JARVISTheme.jarvisBlue40)
+        }
+        .buttonStyle(.plain)
+        .disabled(!canSend)
+        .keyboardShortcut(.return, modifiers: [])
+        .padding(.bottom, 8)
     }
 }

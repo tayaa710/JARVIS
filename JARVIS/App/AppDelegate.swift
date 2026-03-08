@@ -43,6 +43,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        // HUD aesthetic: dark glass background
+        panel.backgroundColor = JARVISTheme.nsJarvisBlack
+        panel.titleVisibility = .hidden
+        panel.titlebarAppearsTransparent = true
+        panel.isMovableByWindowBackground = true
         panel.contentView = NSHostingView(rootView: ChatView(viewModel: vm))
         panel.delegate = self
         panel.center()
@@ -198,12 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = item.button {
-            if let image = NSImage(systemSymbolName: "brain.head.profile", accessibilityDescription: "JARVIS") {
-                image.isTemplate = true
-                button.image = image
-            } else {
-                button.title = "J"
-            }
+            button.image = arcReactorImage(dim: false)
             button.toolTip = "JARVIS"
         }
 
@@ -218,6 +218,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         item.menu = menu
         self.statusItem = item
+    }
+
+    // MARK: - Arc Reactor Menu Bar Icon
+
+    private func arcReactorImage(dim: Bool) -> NSImage {
+        let size = NSSize(width: 18, height: 18)
+        let image = NSImage(size: size, flipped: false) { rect in
+            let centre = NSPoint(x: rect.midX, y: rect.midY)
+            let outerR: CGFloat = 8
+            let innerR: CGFloat = 4
+            let alpha: CGFloat  = dim ? 0.35 : 0.85
+            NSColor(calibratedRed: 0, green: 0.667, blue: 1, alpha: alpha).setStroke()
+            // Outer ring
+            let outer = NSBezierPath(ovalIn: NSRect(
+                x: centre.x - outerR, y: centre.y - outerR,
+                width: outerR * 2, height: outerR * 2
+            ))
+            outer.lineWidth = 1.5
+            outer.stroke()
+            // Inner ring
+            let inner = NSBezierPath(ovalIn: NSRect(
+                x: centre.x - innerR, y: centre.y - innerR,
+                width: innerR * 2, height: innerR * 2
+            ))
+            inner.lineWidth = 1
+            inner.stroke()
+            // Centre dot
+            NSColor(calibratedRed: 0, green: 0.667, blue: 1, alpha: alpha).setFill()
+            let dot = NSBezierPath(ovalIn: NSRect(
+                x: centre.x - 1.5, y: centre.y - 1.5,
+                width: 3, height: 3
+            ))
+            dot.fill()
+            return true
+        }
+        image.isTemplate = false
+        return image
     }
 
     // MARK: - Actions
