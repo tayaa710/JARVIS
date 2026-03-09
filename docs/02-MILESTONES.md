@@ -1272,7 +1272,7 @@ A complete visual overhaul of the UI. Every surface, animation, and interaction 
 
 JARVIS gains access to thousands of community tools.
 
-### M023: MCP Client `[ ]`
+### M023: MCP Client `[x]`
 
 **What to build:**
 - `MCPClient` — connects to an MCP server process via stdin/stdout JSON-RPC
@@ -1282,14 +1282,39 @@ JARVIS gains access to thousands of community tools.
 - Lifecycle: start server process, health check, restart on crash
 
 **Test criteria:**
-- Test handshake with mock MCP server
-- Test tool discovery parses server tools correctly
-- Test tool execution sends correct JSON-RPC and parses result
-- Test server crash triggers restart
-- Test timeout on unresponsive server
+- Test handshake with mock MCP server ✓
+- Test tool discovery parses server tools correctly ✓
+- Test tool execution sends correct JSON-RPC and parses result ✓
+- Test server crash triggers restart ✓
+- Test timeout on unresponsive server ✓
 
 **Deliverables:**
-- MCP client, fully tested
+- MCP client, fully tested ✓
+
+**Built:**
+- `JARVIS/Tools/MCP/MCPTypes.swift` — JSON-RPC 2.0 envelope types (`JSONRPCRequest`, `JSONRPCResponse`, `JSONRPCError`, `JSONRPCNotification`), MCP-specific types (`MCPClientInfo`, `MCPServerInfo`, `MCPServerCapabilities`, `MCPTool`, `MCPContent`, `MCPToolCallResult`), `MCPError` domain error enum, `MCPProtocolVersion` constant ("2025-11-25")
+- `JARVIS/Tools/MCP/MCPTransport.swift` — `MCPTransporting` protocol + `StdioMCPTransport` (launches subprocess, newline-delimited JSON framing via `FileHandle.readabilityHandler` → `AsyncStream`, crash detection via `terminationHandler`)
+- `JARVIS/Tools/MCP/MCPClient.swift` — `MCPClientProtocol` + `MCPClientImpl`: initialize handshake (sends `notifications/initialized`), `listTools` with pagination, `callTool`, background receive loop, per-request timeout via `ThrowingTaskGroup` race, `NSLock`-protected request/response correlation map
+- `JARVIS/Tools/MCP/MCPToolAdapter.swift` — `MCPToolAdapter: ToolExecutor` wraps a discovered MCP tool; names as `mcp__<serverName>__<toolName>`; defaults to `.caution` risk level
+- `Tests/Helpers/MockMCPTransport.swift` — `MockMCPTransport` (AsyncStream-based, `simulateCrash()`, `simulateClose()`) + `MockMCPClient` for adapter testing
+- `Tests/ToolTests/MCPTypesTests.swift` — 11 tests
+- `Tests/ToolTests/MCPClientTests.swift` — 14 tests (handshake, tool discovery + pagination, execution, timeout, crash, shutdown, concurrent request correlation, notification handling)
+- `Tests/ToolTests/MCPToolAdapterTests.swift` — 11 tests
+- `JARVIS/Shared/Logger.swift` — added `Logger.mcp` subsystem
+
+**Total tests: 721 (was 696, added 25)**
+
+**Decisions:**
+- StdioMCPTransport uses `readabilityHandler` feeding an `AsyncStream<Result<Data, Error>>` with a `BufferBox` to accumulate and split on newline boundaries (line-delimited JSON per MCP spec)
+- Client detects crashes (sets `isConnected = false`, fails pending requests) but does NOT auto-restart — restart logic is M024's `MCPServerManager`
+- All MCP tools default to `RiskLevel.caution` (external code); annotations (readOnlyHint, destructiveHint) deferred to future milestone
+- M023 scope is tools only — resources and prompts are out of scope
+
+**Xcode build steps for owner:**
+1. The project.yml already covers `JARVIS/Tools/MCP/` (under the `JARVIS/` source tree) — no xcodegen changes needed
+2. Open `JARVIS.xcodeproj` in Xcode
+3. Press **Cmd+B** — should show "Build Succeeded"
+4. Press **Cmd+U** — should show 721 tests passed
 
 ---
 
