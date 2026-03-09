@@ -10,41 +10,37 @@ enum JARVISTheme {
 
     // MARK: - SwiftUI Colors
 
-    static let jarvisBlack  = Color(red: 0.031, green: 0.047, blue: 0.078) // #080C14
-    static let jarvisBlue   = Color(red: 0.0,   green: 0.667, blue: 1.0)   // #00AAFF
-    static let jarvisCyan   = Color(red: 0.0,   green: 1.0,   blue: 1.0)   // #00FFFF
-    static let jarvisPurple = Color(red: 0.482, green: 0.184, blue: 0.745) // #7B2FBE
-    static let jarvisDanger = Color(red: 1.0,   green: 0.271, blue: 0.271) // #FF4545
+    static let background        = Color(.windowBackgroundColor)   // system adaptive
+    static let surfacePrimary    = Color(white: 0.12)              // message list bg
+    static let surfaceSecondary  = Color(white: 0.17)              // input area bg
+    static let userBubble        = Color.accentColor               // system blue
+    static let assistantBubble   = Color(white: 0.22)              // dark gray
+    static let textPrimary       = Color.primary
+    static let textSecondary     = Color.secondary
+    static let border            = Color(white: 0.28)
+    static let danger            = Color.red
 
-    // Opacity variants — computed on demand so no static init ordering issues
-    static var jarvisBlueDim: Color { jarvisBlue.opacity(0.30) }
-    static var jarvisBlue10:  Color { jarvisBlue.opacity(0.10) }
-    static var jarvisBlue15:  Color { jarvisBlue.opacity(0.15) }
-    static var jarvisBlue40:  Color { jarvisBlue.opacity(0.40) }
-    static var jarvisBlue60:  Color { jarvisBlue.opacity(0.60) }
+    // Tool call pill background
+    static let pillBackground    = Color(white: 0.25)
 
-    // MARK: - AppKit Colors (for NSPanel / NSVisualEffectView)
+    // MARK: - AppKit Colors
 
-    static let nsJarvisBlack = NSColor(red: 0.031, green: 0.047, blue: 0.078, alpha: 1.0)
+    static let nsBackground      = NSColor.windowBackgroundColor
 
-    // MARK: - Fonts
+    // MARK: - Fonts — all SF Pro
 
-    static let jarvisOutput      = Font.system(.body,    design: .monospaced)
-    static let jarvisOutputSmall = Font.system(.caption, design: .monospaced)
-    static let jarvisUI          = Font.system(.body)
-    static let jarvisUISmall     = Font.system(.caption)
+    static let body:     Font = .body
+    static let caption:  Font = .caption
+    static let headline: Font = .headline
 
-    // MARK: - Animation Durations
-
-    static let bootSequenceDuration:    TimeInterval = 1.8
-    static let characterRevealInterval: TimeInterval = 0.015  // 15 ms per char (streaming)
-    static let bootCharRevealInterval:  TimeInterval = 0.025  // 25 ms per char (boot sequence)
-    static let pulsePeriod:             TimeInterval = 2.0    // 0.5 Hz corner-bracket pulse
-    static let sonarRingInterval:       TimeInterval = 0.3    // offset between sonar rings
+    // Legacy aliases — preserved so callers updated incrementally still compile
+    static let jarvisUI          = Font.body
+    static let jarvisUISmall     = Font.caption
+    static let jarvisOutput      = Font.body
+    static let jarvisOutputSmall = Font.caption
 
     // MARK: - Spacing
 
-    static let messagePadding:     CGFloat = 12
-    static let cornerBracketArm:   CGFloat = 8
-    static let cornerBracketStroke: CGFloat = 1
+    static let messagePadding:     CGFloat = 16
+    static let bubbleCornerRadius: CGFloat = 16
 }

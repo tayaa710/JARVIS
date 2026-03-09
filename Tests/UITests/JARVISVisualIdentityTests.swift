@@ -10,162 +10,43 @@ struct JARVISThemeTests {
 
     @Test("Color constants are accessible")
     func colorConstantsExist() {
-        // Verify NSColor has non-zero components (confirms correct values, not default black)
-        let ns = JARVISTheme.nsJarvisBlack
-        #expect(ns.blueComponent > 0)   // #080C14 has blue component
-        #expect(ns.redComponent > 0)    // has non-zero red too
-        // SwiftUI colors just need to be referenceable (compile-time check)
-        _ = JARVISTheme.jarvisBlack
-        _ = JARVISTheme.jarvisBlue
-        _ = JARVISTheme.jarvisCyan
-        _ = JARVISTheme.jarvisPurple
-        _ = JARVISTheme.jarvisDanger
-        _ = JARVISTheme.jarvisBlueDim
-        _ = JARVISTheme.jarvisBlue10
-        _ = JARVISTheme.jarvisBlue15
-        _ = JARVISTheme.jarvisBlue40
-        _ = JARVISTheme.jarvisBlue60
+        _ = JARVISTheme.background
+        _ = JARVISTheme.surfacePrimary
+        _ = JARVISTheme.surfaceSecondary
+        _ = JARVISTheme.userBubble
+        _ = JARVISTheme.assistantBubble
+        _ = JARVISTheme.textPrimary
+        _ = JARVISTheme.textSecondary
+        _ = JARVISTheme.border
+        _ = JARVISTheme.danger
+        _ = JARVISTheme.pillBackground
+        #expect(Bool(true))
+    }
+
+    @Test("AppKit NSColor constant is accessible")
+    func nsColorConstantExists() {
+        let ns = JARVISTheme.nsBackground
+        _ = ns  // referenceable without crash
+        #expect(Bool(true))
     }
 
     @Test("Font constants are accessible")
     func fontConstantsExist() {
-        _ = JARVISTheme.jarvisOutput
-        _ = JARVISTheme.jarvisOutputSmall
+        _ = JARVISTheme.body
+        _ = JARVISTheme.caption
+        _ = JARVISTheme.headline
+        // Legacy aliases
         _ = JARVISTheme.jarvisUI
         _ = JARVISTheme.jarvisUISmall
-        // If we reach here without crashing, fonts exist
+        _ = JARVISTheme.jarvisOutput
+        _ = JARVISTheme.jarvisOutputSmall
         #expect(Bool(true))
     }
 
-    @Test("Animation durations are positive")
-    func animationDurationsArePositive() {
-        #expect(JARVISTheme.bootSequenceDuration > 0)
-        #expect(JARVISTheme.characterRevealInterval > 0)
-        #expect(JARVISTheme.bootCharRevealInterval > 0)
-        #expect(JARVISTheme.pulsePeriod > 0)
-        #expect(JARVISTheme.sonarRingInterval > 0)
-    }
-
-    @Test("bootSequenceDuration is approximately 1.8 seconds")
-    func bootSequenceDurationIsCorrect() {
-        #expect(abs(JARVISTheme.bootSequenceDuration - 1.8) < 0.001)
-    }
-}
-
-// MARK: - HUDCornerBrackets Tests
-
-@Suite("HUDCornerBrackets Tests")
-struct HUDCornerBracketsTests {
-
-    @Test("HUDCornerBrackets modifier instantiates without crash")
-    func modifierInstantiates() {
-        let modifier = HUDCornerBrackets()
-        // If we reach here without crashing, instantiation succeeded
-        #expect(modifier.brightness == 1.0)
-    }
-
-    @Test("HUDCornerBrackets default parameters match theme constants")
-    func defaultParamsMatchTheme() {
-        let modifier = HUDCornerBrackets()
-        #expect(modifier.armLength == JARVISTheme.cornerBracketArm)
-        #expect(modifier.strokeWidth == JARVISTheme.cornerBracketStroke)
-        #expect(modifier.brightness == 1.0)
-    }
-}
-
-// MARK: - ParticleFieldView Tests
-
-@Suite("ParticleFieldView Tests")
-struct ParticleFieldViewTests {
-
-    @Test("particleCount constant equals 40")
-    func particleCountIs40() {
-        #expect(ParticleFieldView.particleCount == 40)
-    }
-
-    @Test("makeInitialParticles produces exactly particleCount particles")
-    func makeInitialParticlesCount() {
-        let particles = ParticleFieldView.makeInitialParticles(
-            count: ParticleFieldView.particleCount,
-            size: CGSize(width: 400, height: 600)
-        )
-        #expect(particles.count == ParticleFieldView.particleCount)
-    }
-
-    @Test("Particle past right edge wraps to left")
-    func wrapRightEdge() {
-        let p = ParticleState(x: 401, y: 300, vx: 1, vy: 0)
-        let wrapped = ParticleFieldView.wrapped(particle: p, width: 400, height: 600)
-        #expect(wrapped.x == 0)
-    }
-
-    @Test("Particle past left edge wraps to right")
-    func wrapLeftEdge() {
-        let p = ParticleState(x: -1, y: 300, vx: -1, vy: 0)
-        let wrapped = ParticleFieldView.wrapped(particle: p, width: 400, height: 600)
-        #expect(wrapped.x == 400)
-    }
-
-    @Test("Particle past bottom edge wraps to top")
-    func wrapBottomEdge() {
-        let p = ParticleState(x: 200, y: 601, vx: 0, vy: 1)
-        let wrapped = ParticleFieldView.wrapped(particle: p, width: 400, height: 600)
-        #expect(wrapped.y == 0)
-    }
-
-    @Test("Particle past top edge wraps to bottom")
-    func wrapTopEdge() {
-        let p = ParticleState(x: 200, y: -1, vx: 0, vy: -1)
-        let wrapped = ParticleFieldView.wrapped(particle: p, width: 400, height: 600)
-        #expect(wrapped.y == 600)
-    }
-
-    @Test("Particle within bounds is unchanged")
-    func noWrapWhenInBounds() {
-        let p = ParticleState(x: 200, y: 300, vx: 0.1, vy: 0.1)
-        let wrapped = ParticleFieldView.wrapped(particle: p, width: 400, height: 600)
-        #expect(wrapped.x == 200)
-        #expect(wrapped.y == 300)
-    }
-}
-
-// MARK: - BootSequenceController Tests
-
-@Suite("BootSequenceController Tests")
-struct BootSequenceControllerTests {
-
-    @Test("BootSequenceController starts in typing phase")
-    @MainActor
-    func startsInTypingPhase() {
-        let controller = BootSequenceController()
-        #expect(controller.phase == .typing)
-    }
-
-    @Test("BootSequenceController initial typedCount is zero")
-    @MainActor
-    func initialTypedCountIsZero() {
-        let controller = BootSequenceController()
-        #expect(controller.typedCount == 0)
-    }
-
-    @Test("BootSequenceController phase transitions via direct assignment")
-    @MainActor
-    func phaseTransitions() {
-        let controller = BootSequenceController()
-        #expect(controller.phase == .typing)
-        controller.phase = .checkmarks(0)
-        #expect(controller.phase == .checkmarks(0))
-        controller.phase = .checkmarks(1)
-        #expect(controller.phase == .checkmarks(1))
-        controller.phase = .checkmarks(2)
-        #expect(controller.phase == .checkmarks(2))
-        controller.phase = .done
-        #expect(controller.phase == .done)
-    }
-
-    @Test("bootSequenceDuration is within 0.3s of 1.8s")
-    func totalDurationApproximately1_8s() {
-        #expect(abs(JARVISTheme.bootSequenceDuration - 1.8) < 0.3)
+    @Test("Spacing constants are positive")
+    func spacingConstantsArePositive() {
+        #expect(JARVISTheme.messagePadding > 0)
+        #expect(JARVISTheme.bubbleCornerRadius > 0)
     }
 }
 
@@ -218,12 +99,12 @@ struct MessageLayoutConfigTests {
         #expect(config.isMonospaced == false)
     }
 
-    @Test("Assistant role produces leading alignment, no background, monospaced")
+    @Test("Assistant role produces leading alignment with background, non-monospaced")
     func assistantRoleLayout() {
         let config = MessageLayoutConfig.from(role: .assistant)
         #expect(config.alignment == .leading)
-        #expect(config.hasBackground == false)
-        #expect(config.isMonospaced == true)
+        #expect(config.hasBackground == true)
+        #expect(config.isMonospaced == false)
     }
 
     @Test("MessageLayoutConfig conforms to Equatable")

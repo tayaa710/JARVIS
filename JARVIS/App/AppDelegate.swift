@@ -43,33 +43,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        // Build the floating NSPanel
-        let panel = NSPanel(
+        // Build the floating panel — KeyablePanel ensures SwiftUI controls receive
+        // keyboard input even under .accessory activation policy.
+        let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 600),
             styleMask: [
                 .titled,
                 .closable,
                 .resizable,
                 .miniaturizable,
-                .fullSizeContentView,
-                .nonactivatingPanel
+                .fullSizeContentView
             ],
             backing: .buffered,
             defer: false
         )
         panel.title = "JARVIS"
         panel.level = .floating
-        panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        // HUD aesthetic: dark glass background
-        panel.backgroundColor = JARVISTheme.nsJarvisBlack
+        panel.backgroundColor = NSColor.windowBackgroundColor
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
-        panel.isMovableByWindowBackground = true
+        panel.appearance = NSAppearance(named: .darkAqua)
         panel.contentView = NSHostingView(rootView: ChatView(viewModel: vm))
         panel.delegate = self
         panel.center()
+        NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
         self.panel = panel
 
@@ -284,6 +283,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panel.orderOut(nil)
             statusItem?.menu?.item(at: 0)?.title = "Show JARVIS"
         } else {
+            NSApp.activate(ignoringOtherApps: true)
             panel.makeKeyAndOrderFront(nil)
             statusItem?.menu?.item(at: 0)?.title = "Hide JARVIS"
         }

@@ -4,58 +4,31 @@ struct ChatView: View {
 
     @Bindable var viewModel: ChatViewModel
 
-    @State private var bootComplete = false
-    @State private var cornerBrightness: Double = 1.0
-
     var body: some View {
-        ZStack {
-            // Base background
-            JARVISTheme.jarvisBlack.ignoresSafeArea()
+        VStack(spacing: 0) {
+            StatusIndicatorView(
+                status: viewModel.status,
+                onAbort: viewModel.abort
+            )
 
-            // Ambient particle field
-            ParticleFieldView()
-                .ignoresSafeArea()
+            Divider()
 
-            // Scanline texture
-            ScanlineOverlay()
-                .ignoresSafeArea()
+            messageList
 
-            // Main HUD content
-            VStack(spacing: 0) {
-                StatusIndicatorView(
-                    status: viewModel.status,
-                    onAbort: viewModel.abort
-                )
+            Divider()
 
-                Divider()
-                    .background(JARVISTheme.jarvisBlueDim)
-
-                messageList
-
-                Divider()
-                    .background(JARVISTheme.jarvisBlueDim)
-
-                ChatInputView(
-                    inputText: $viewModel.inputText,
-                    onSend: viewModel.send,
-                    isEnabled: viewModel.status == .idle,
-                    isListening: viewModel.isListeningForSpeech,
-                    onMicTap: { viewModel.toggleListening() }
-                )
-            }
-            .hudCornerBrackets(brightness: cornerBrightness)
-            .onAppear { startCornerPulse() }
-
-            // Boot sequence overlay
-            if !bootComplete {
-                BootSequenceView { bootComplete = true }
-                    .transition(.opacity)
-                    .zIndex(10)
-            }
-
-            // API key overlay
+            ChatInputView(
+                inputText: $viewModel.inputText,
+                onSend: viewModel.send,
+                isEnabled: viewModel.status == .idle,
+                isListening: viewModel.isListeningForSpeech,
+                onMicTap: { viewModel.toggleListening() }
+            )
+        }
+        .background(JARVISTheme.background)
+        .overlay {
             if viewModel.needsAPIKey {
-                apiKeyOverlay.zIndex(5)
+                apiKeyOverlay
             }
         }
         .sheet(item: $viewModel.pendingConfirmation) { pending in
@@ -95,6 +68,7 @@ struct ChatView: View {
                 .padding(.vertical, 8)
             }
             .scrollContentBackground(.hidden)
+            .background(JARVISTheme.surfacePrimary)
             .onChange(of: viewModel.messages.count) { _, _ in
                 scrollToBottom(proxy)
             }
@@ -110,55 +84,28 @@ struct ChatView: View {
         }
     }
 
-    // MARK: - Corner Pulse
-
-    private func startCornerPulse() {
-        Timer.scheduledTimer(withTimeInterval: JARVISTheme.pulsePeriod / 2, repeats: true) { _ in
-            withAnimation(.easeInOut(duration: JARVISTheme.pulsePeriod / 2)) {
-                cornerBrightness = cornerBrightness > 0.7 ? 0.4 : 1.0
-            }
-        }
-    }
-
     // MARK: - API Key Overlay
 
     private var apiKeyOverlay: some View {
         ZStack {
-            JARVISTheme.jarvisBlack.opacity(0.96)
+            Color.black.opacity(0.7).ignoresSafeArea()
 
             VStack(spacing: 16) {
-                Text("ENTER API KEY")
-                    .font(JARVISTheme.jarvisOutput)
-                    .foregroundStyle(JARVISTheme.jarvisCyan)
+                Text("Enter Anthropic API Key")
+                    .font(JARVISTheme.headline)
+                    .foregroundStyle(JARVISTheme.textPrimary)
 
                 Text("Get your key at console.anthropic.com")
-                    .font(JARVISTheme.jarvisUISmall)
-                    .foregroundStyle(JARVISTheme.jarvisBlue40)
+                    .font(JARVISTheme.caption)
+                    .foregroundStyle(JARVISTheme.textSecondary)
 
                 APIKeyEntry(viewModel: viewModel)
             }
             .padding(24)
-            .background(Color.black.opacity(0.6))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .hudCornerBrackets()
+            .background(JARVISTheme.assistantBubble)
+            .clipShape(RoundedRectangle(cornerRadius: JARVISTheme.bubbleCornerRadius))
             .padding(40)
         }
-    }
-}
-
-// MARK: - Scanline Overlay
-
-private struct ScanlineOverlay: View {
-    var body: some View {
-        Canvas { ctx, size in
-            var y: CGFloat = 0
-            while y < size.height {
-                let rect = CGRect(x: 0, y: y, width: size.width, height: 1)
-                ctx.fill(Path(rect), with: .color(.black.opacity(0.03)))
-                y += 4
-            }
-        }
-        .allowsHitTesting(false)
     }
 }
 
@@ -180,7 +127,6 @@ private struct APIKeyEntry: View {
                 viewModel.saveAPIKey(trimmed)
             }
             .buttonStyle(.borderedProminent)
-            .tint(JARVISTheme.jarvisBlue)
             .disabled(keyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }

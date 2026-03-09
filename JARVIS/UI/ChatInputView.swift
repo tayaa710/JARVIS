@@ -48,8 +48,8 @@ struct ChatInputView: View {
             }
         }
         .padding(.horizontal, JARVISTheme.messagePadding)
-        .padding(.vertical, 8)
-        .background(JARVISTheme.jarvisBlack.opacity(0.8))
+        .padding(.vertical, 10)
+        .background(JARVISTheme.surfaceSecondary)
     }
 
     // MARK: - Mic Button
@@ -58,7 +58,7 @@ struct ChatInputView: View {
         Button(action: onMicTap) {
             Image(systemName: isListening ? "mic.fill" : "mic")
                 .font(.title2)
-                .foregroundStyle(isListening ? JARVISTheme.jarvisCyan : JARVISTheme.jarvisBlue40)
+                .foregroundStyle(isListening ? Color.accentColor : JARVISTheme.textSecondary)
                 .scaleEffect(micPulse ? 1.15 : 1.0)
                 .animation(
                     isListening
@@ -79,22 +79,15 @@ struct ChatInputView: View {
 
     private var inputField: some View {
         TextEditor(text: $inputText)
-            .font(JARVISTheme.jarvisUI)
-            .foregroundStyle(Color.white)
+            .font(JARVISTheme.body)
+            .foregroundStyle(JARVISTheme.textPrimary)
             .frame(height: editorHeight)
             .scrollContentBackground(.hidden)
-            .background(JARVISTheme.jarvisBlack.opacity(0.7))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .background(JARVISTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(
-                        isFocused ? JARVISTheme.jarvisBlue : JARVISTheme.jarvisBlueDim,
-                        lineWidth: 1
-                    )
-                    .shadow(
-                        color: isFocused ? JARVISTheme.jarvisBlue.opacity(0.4) : .clear,
-                        radius: 4
-                    )
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isFocused ? Color.accentColor.opacity(0.6) : JARVISTheme.border, lineWidth: 1)
             )
             .focused($isFocused)
             .disabled(isListening)
@@ -110,10 +103,10 @@ struct ChatInputView: View {
                 }
                 return .ignored
             }
-            // Height oracle: a hidden Text mirror
+            // Height oracle: hidden Text mirror
             .background(
                 Text(inputText.isEmpty ? " " : inputText)
-                    .font(JARVISTheme.jarvisUI)
+                    .font(JARVISTheme.body)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 4)
                     .fixedSize(horizontal: false, vertical: true)
@@ -139,8 +132,8 @@ struct ChatInputView: View {
     private var placeholderText: some View {
         if inputText.isEmpty && !isListening {
             Text("Message JARVIS…")
-                .font(JARVISTheme.jarvisUI)
-                .foregroundStyle(JARVISTheme.jarvisBlue40)
+                .font(JARVISTheme.body)
+                .foregroundStyle(JARVISTheme.textSecondary)
                 .padding(.top, 8)
                 .padding(.leading, 5)
                 .allowsHitTesting(false)
@@ -153,7 +146,7 @@ struct ChatInputView: View {
         Button(action: onSend) {
             Image(systemName: "arrow.up.circle.fill")
                 .font(.title2)
-                .foregroundStyle(canSend ? JARVISTheme.jarvisBlue : JARVISTheme.jarvisBlue40)
+                .foregroundStyle(canSend ? Color.accentColor : JARVISTheme.textSecondary)
         }
         .buttonStyle(.plain)
         .disabled(!canSend)

@@ -8,24 +8,24 @@ struct ConfirmationDialog: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("JARVIS WANTS TO USE: \(toolUse.name.uppercased())")
-                .font(JARVISTheme.jarvisOutput)
-                .foregroundStyle(JARVISTheme.jarvisCyan)
+            Text("JARVIS wants to use: \(toolUse.name)")
+                .font(JARVISTheme.headline)
+                .foregroundStyle(JARVISTheme.textPrimary)
 
             if !toolUse.input.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("ARGUMENTS:")
-                        .font(JARVISTheme.jarvisOutputSmall)
-                        .foregroundStyle(JARVISTheme.jarvisBlue40)
+                    Text("Arguments")
+                        .font(JARVISTheme.caption)
+                        .foregroundStyle(JARVISTheme.textSecondary)
                     Text(formattedArguments)
-                        .font(JARVISTheme.jarvisOutputSmall)
-                        .foregroundStyle(JARVISTheme.jarvisBlue)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(JARVISTheme.textPrimary)
                         .padding(8)
-                        .background(Color.black.opacity(0.4))
+                        .background(JARVISTheme.surfacePrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(JARVISTheme.jarvisBlueDim, lineWidth: 1)
+                                .stroke(JARVISTheme.border, lineWidth: 1)
                         )
                 }
             }
@@ -33,21 +33,18 @@ struct ConfirmationDialog: View {
             HStack {
                 Button("Deny", action: onDeny)
                     .buttonStyle(.bordered)
-                    .tint(JARVISTheme.jarvisDanger)
                     .keyboardShortcut(.escape)
 
                 Spacer()
 
                 Button("Allow", action: onApprove)
                     .buttonStyle(.borderedProminent)
-                    .tint(JARVISTheme.jarvisBlue)
                     .keyboardShortcut(.defaultAction)
             }
         }
         .padding(20)
         .frame(width: 340)
-        .background(JARVISTheme.jarvisBlack)
-        .hudCornerBrackets()
+        .background(JARVISTheme.assistantBubble)
     }
 
     private var formattedArguments: String {

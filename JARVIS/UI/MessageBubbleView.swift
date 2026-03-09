@@ -19,7 +19,7 @@ struct MessageLayoutConfig: Equatable {
         case .user:
             return MessageLayoutConfig(alignment: .trailing, hasBackground: true, isMonospaced: false)
         case .assistant:
-            return MessageLayoutConfig(alignment: .leading, hasBackground: false, isMonospaced: true)
+            return MessageLayoutConfig(alignment: .leading, hasBackground: true, isMonospaced: false)
         }
     }
 }
@@ -46,19 +46,13 @@ struct MessageBubbleView: View {
 
     let message: ChatMessage
 
-    /// Max chars revealed character-by-character before snapping to full text.
-    private static let revealThreshold = 150
-
-    @State private var revealedCount: Int = 0
-    @State private var revealTimer: Timer? = nil
-
     private var config: MessageLayoutConfig {
         MessageLayoutConfig.from(role: message.role)
     }
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
-            if config.alignment == .trailing { Spacer(minLength: 40) }
+            if config.alignment == .trailing { Spacer(minLength: 60) }
 
             VStack(alignment: config.alignment == .trailing ? .trailing : .leading, spacing: 4) {
                 bubbleContent
@@ -68,17 +62,10 @@ struct MessageBubbleView: View {
             }
             .padding(.horizontal, 4)
 
-            if config.alignment == .leading { Spacer(minLength: 40) }
+            if config.alignment == .leading { Spacer(minLength: 60) }
         }
         .padding(.horizontal, JARVISTheme.messagePadding)
         .padding(.vertical, 4)
-        .onAppear { startRevealIfNeeded() }
-        .onChange(of: message.isStreaming) { _, streaming in
-            if !streaming { revealTimer?.invalidate(); revealTimer = nil }
-        }
-        .onChange(of: message.text) { _, _ in
-            startRevealIfNeeded()
-        }
     }
 
     // MARK: - Bubble Content
@@ -93,41 +80,31 @@ struct MessageBubbleView: View {
     }
 
     private var userBubble: some View {
-        markdownText(for: displayText)
-            .font(JARVISTheme.jarvisUI)
-            .foregroundStyle(Color.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                ZStack {
-                    Color.black.opacity(0.5)
-                    JARVISTheme.jarvisBlue10
-                }
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(JARVISTheme.jarvisBlueDim, lineWidth: 0.5)
-            )
-            .shadow(color: JARVISTheme.jarvisBlue.opacity(0.1), radius: 4)
+        VStack(alignment: .trailing, spacing: 4) {
+            markdownText(for: message.text)
+                .font(JARVISTheme.body)
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(JARVISTheme.userBubble)
+                .clipShape(RoundedRectangle(cornerRadius: JARVISTheme.bubbleCornerRadius))
+        }
     }
 
     private var assistantBubble: some View {
-        HStack(alignment: .top, spacing: 8) {
-            // Left-border accent line
-            Rectangle()
-                .fill(JARVISTheme.jarvisBlue)
-                .frame(width: 1)
-                .padding(.vertical, 2)
+        VStack(alignment: .leading, spacing: 4) {
+            markdownText(for: message.text)
+                .font(JARVISTheme.body)
+                .foregroundStyle(JARVISTheme.textPrimary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(JARVISTheme.assistantBubble)
+                .clipShape(RoundedRectangle(cornerRadius: JARVISTheme.bubbleCornerRadius))
 
-            VStack(alignment: .leading, spacing: 0) {
-                markdownText(for: displayText)
-                    .font(JARVISTheme.jarvisOutput)
-                    .foregroundStyle(JARVISTheme.jarvisCyan)
-
-                if message.isStreaming {
-                    BlinkingCursor()
-                }
+            if message.isStreaming {
+                ProgressView()
+                    .scaleEffect(0.6)
+                    .padding(.leading, 4)
             }
         }
     }
@@ -137,37 +114,6 @@ struct MessageBubbleView: View {
             return Text(attributed)
         }
         return Text(text)
-    }
-
-    // MARK: - Character Reveal
-
-    private var displayText: String {
-        guard message.role == .assistant, message.isStreaming else {
-            return message.text
-        }
-        if message.text.count > Self.revealThreshold {
-            return message.text  // snap for long messages
-        }
-        return String(message.text.prefix(revealedCount))
-    }
-
-    private func startRevealIfNeeded() {
-        guard message.role == .assistant, message.isStreaming else { return }
-        guard message.text.count <= Self.revealThreshold else { return }
-        guard revealedCount < message.text.count else { return }
-
-        revealTimer?.invalidate()
-        revealTimer = Timer.scheduledTimer(
-            withTimeInterval: JARVISTheme.characterRevealInterval,
-            repeats: true
-        ) { timer in
-            if revealedCount < message.text.count {
-                revealedCount += 1
-            } else {
-                timer.invalidate()
-                revealTimer = nil
-            }
-        }
     }
 
     // MARK: - Tool Call Pills
@@ -189,12 +135,12 @@ private struct ToolCallPill: View {
         HStack(spacing: 4) {
             pillIcon
             Text(toolCall.name)
-                .font(JARVISTheme.jarvisOutputSmall)
-                .foregroundStyle(.white.opacity(0.85))
+                .font(JARVISTheme.caption)
+                .foregroundStyle(JARVISTheme.textPrimary)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
-        .background(JARVISTheme.jarvisPurple.opacity(0.75))
+        .background(JARVISTheme.pillBackground)
         .clipShape(Capsule())
     }
 
@@ -207,31 +153,12 @@ private struct ToolCallPill: View {
         case .checkmark:
             Image(systemName: "checkmark.circle.fill")
                 .font(.caption2)
-                .foregroundStyle(JARVISTheme.jarvisCyan)
+                .foregroundStyle(.green)
         case .failure:
             Image(systemName: "xmark.circle.fill")
                 .font(.caption2)
-                .foregroundStyle(JARVISTheme.jarvisDanger)
+                .foregroundStyle(JARVISTheme.danger)
         }
-    }
-}
-
-// MARK: - Blinking Cursor
-
-private struct BlinkingCursor: View {
-
-    @State private var visible = true
-
-    var body: some View {
-        Rectangle()
-            .fill(JARVISTheme.jarvisBlue)
-            .frame(width: 8, height: 14)
-            .opacity(visible ? 1 : 0)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 0.5).repeatForever()) {
-                    visible.toggle()
-                }
-            }
     }
 }
 
@@ -245,7 +172,7 @@ private struct LoadingDots: View {
         HStack(spacing: 2) {
             ForEach(0..<3) { i in
                 Circle()
-                    .fill(JARVISTheme.jarvisCyan)
+                    .fill(JARVISTheme.textSecondary)
                     .frame(width: 3, height: 3)
                     .opacity(phase == i ? 1 : 0.3)
             }

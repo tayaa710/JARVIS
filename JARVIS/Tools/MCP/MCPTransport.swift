@@ -98,7 +98,7 @@ final class StdioMCPTransport: MCPTransporting, @unchecked Sendable {
 
         proc.terminationHandler = { [weak self] _ in
             guard let self else { return }
-            lock.withLock { _isRunning = false }
+            lock.withLock { self._isRunning = false }
             continuation.yield(.failure(MCPError.serverCrashed))
             continuation.finish()
             Logger.mcp.info("MCP server process terminated")
